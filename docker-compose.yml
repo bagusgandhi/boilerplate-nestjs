@@ -5,7 +5,13 @@ services:
     container_name: boilerplate-nestjs
     build: .
     ports:
-      - "8089:8000"
+      - "8093:4000"
     restart: always
     env_file:
       - .env
+    networks:
+      - vhioshop
+
+networks:
+  vhioshop:
+    external: true
