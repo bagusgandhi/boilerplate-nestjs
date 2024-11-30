@@ -11,9 +11,12 @@ const typeOrmConfig: TypeOrmModuleOptions = {
   password: DB_PASSWORD,
   database: DB_NAME,
   entities: ['dist/**/*.entity{.ts,.js}'],
-  synchronize: true,
+  // entities: ['src/**/*.entity{.ts,.js}'],
+  synchronize: false,
   dropSchema: false,
   logging: true,
+  migrations: ['src/database/migrations/**/*.ts'],
+  migrationsTableName: 'migration_table',
 };
 
 export default typeOrmConfig;

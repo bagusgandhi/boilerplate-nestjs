@@ -8,6 +8,11 @@ import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './modules/auth/guard/role.guard';
 import { PermissionsGuard } from './modules/auth/guard/permission.guard';
 import { JwtAuthGuard } from './modules/auth/guard/jwt.guard';
+import { FlowModule } from './modules/flow/flow.module';
+import { AssetModule } from './modules/asset/asset.module';
+import { MaintenanceLogModule } from './modules/maintenance-log/maintenance-log.module';
+import { MaintenanceModule } from './modules/maintenance/maintenance.module';
+import { HistoryActionLogModule } from './modules/history-action-log/history-action-log.module';
 
 @Module({
   imports: [
@@ -15,7 +20,12 @@ import { JwtAuthGuard } from './modules/auth/guard/jwt.guard';
     AuthModule,
     UserModule,
     RoleModule,
-    PermissionModule
+    PermissionModule,
+    AssetModule,
+    FlowModule,
+    MaintenanceModule,
+    MaintenanceLogModule,
+    HistoryActionLogModule
   ],
   controllers: [],
   providers: [
@@ -30,7 +40,7 @@ import { JwtAuthGuard } from './modules/auth/guard/jwt.guard';
     {
       provide: APP_GUARD,
       useClass: PermissionsGuard
-    }
+    },
   ],
 })
 export class AppModule {}

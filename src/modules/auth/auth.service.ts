@@ -32,7 +32,7 @@ export class AuthService {
       if (matched) {
         const payload: JwtPayload = {
           id: id,
-          role: roles,
+          // role: roles,
         };
 
         return {

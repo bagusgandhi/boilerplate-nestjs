@@ -1,6 +1,6 @@
-import { IsOptional, IsNumber, isBoolean, IsBoolean, IsString } from 'class-validator';
+import { IsOptional, IsNumber, isBoolean, IsBoolean, IsString, IsNotEmpty } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class PaginationDto {
   @ApiProperty({
@@ -41,4 +41,22 @@ export class PaginationDto {
   @IsOptional()
   @IsBoolean()
   viewAll?: boolean = false;
+
+  @ApiPropertyOptional({
+    type: String,
+    description: 'Resourse order ex: field1:ASC,field2:DESC',
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (!value) return {};
+
+    return value.split(',').reduce((acc, orderStr) => {
+      const [field, order] = orderStr.split(':');
+      const formattedField = field.split('.').join('_'); // Convert dot notation to underscore if needed
+      acc[formattedField] = (order || 'ASC').toUpperCase(); // Default to 'ASC' if no order is provided
+      return acc;
+    }, {});
+  })
+  @IsNotEmpty()
+  order?: string;
 }
