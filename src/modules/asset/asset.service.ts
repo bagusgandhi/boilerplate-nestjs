@@ -19,6 +19,7 @@ import { User } from '../user/entities/user.entity';
 import { IUserRequest } from 'src/decorators/get-user.decorator';
 import { UserService } from '../user/user.service';
 import { FilterAliasDto } from './dto/filter-alias.dto';
+import { v4 as uuidv4 } from 'uuid';
 // import { MaintenanceService } from '../maintenance/maintenance.service';
 // import { FlowService } from '../flow/flow.service';
 
@@ -215,8 +216,8 @@ export class AssetService {
             }
 
             newAsset.parent_asset = parentAsset;
-            newAsset.name = `${parentAsset.name}_${body.name}`;
-            newAsset.alias = body.name;
+            newAsset.name = body.name;
+            newAsset.bogie = body.bogie;
           }
           break;
         case AssetType.KEPING_RODA:
@@ -392,7 +393,7 @@ export class AssetService {
       return result;
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      throw new Error('Error creating flow: ' + error.message);
+      throw new Error('Error updating asset: ' + error.message);
     } finally {
       await queryRunner.release();
     }
@@ -506,13 +507,20 @@ export class AssetService {
     await queryRunner.startTransaction();
 
     try {
-      const existingFlow = await this.assetRepository.findOneBy({ id });
+      const existingAsset = await this.assetRepository.findOneBy({ id });
 
-      if (!existingFlow) {
-        throw new HttpException('Flow data not found', 404);
+      if (!existingAsset) {
+        throw new HttpException('Asset data not found', 404);
       }
 
-      await queryRunner.manager.delete(Asset, { id });
+      const randomName = `${existingAsset.name}_deleted_${uuidv4()}`;
+      await queryRunner.manager.update(
+        Asset,
+        { id },
+        { name: randomName }
+      );
+
+      await queryRunner.manager.softDelete(Asset, { id });
 
       // insert action log
       // await this.actionLogRepository.insertData(queryRunner.manager, someData);
@@ -520,7 +528,7 @@ export class AssetService {
       await queryRunner.commitTransaction();
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      throw new Error('Error creating flow: ' + error.message);
+      throw new Error('Error creating asset: ' + error.message);
     } finally {
       await queryRunner.release();
     }
