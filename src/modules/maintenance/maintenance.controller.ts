@@ -12,6 +12,15 @@ export class MaintenanceController {
   constructor(private readonly maintenanceService: MaintenanceService) {}
 
   @ApiOperation({
+    summary: 'Create maintenance.',
+  })
+  @ApiBearerAuth()
+  @Patch()
+  async create(@Body() body: CreateUpdateMaintenanceDto) {
+    return this.maintenanceService.upsert(body);
+  }
+
+  @ApiOperation({
     summary: 'Update maintenance.',
   })
   @ApiBearerAuth()

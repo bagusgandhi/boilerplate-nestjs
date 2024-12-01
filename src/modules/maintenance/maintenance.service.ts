@@ -9,6 +9,7 @@ import { Asset } from '../asset/entities/asset.entity';
 import { Flow } from '../flow/entities/flow.entity';
 import { AssetType } from '../asset/dto/create-update-asset.dto';
 import { PaginationDto } from 'src/global/dto/pagination.dto';
+import { MaintenanceLogService } from '../maintenance-log/maintenance-log.service';
 
 @Injectable()
 export class MaintenanceService {
@@ -18,6 +19,7 @@ export class MaintenanceService {
     @Inject(forwardRef(() => AssetService))
     private readonly assetService: AssetService,
     private flowService: FlowService,
+    private maintenanceLogService: MaintenanceLogService
   ) {}
 
   async get(id: string) {

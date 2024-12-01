@@ -51,7 +51,8 @@ export class AssetService {
         throw new HttpException('Asset data not found', 404);
       }
 
-      return data;
+      return this.buildAssetTree(data);
+      // return data;
     } catch (error) {
       throw new Error('Error Get Asset by id: ' + error.message);
     }
@@ -76,30 +77,19 @@ export class AssetService {
   }
 
   private async buildAssetTree(asset: Asset): Promise<any> {
-    // Recursively build children tree
     const children = await this.assetRepository.find({
-      where: { parent_asset: asset },
-      relations: ['children'],
+      where: { parent_asset: { id: asset.id } }, // Load children of the current asset
+      relations: ['parent_asset', 'children', 'maintenance', 'maintenance.flow'],
     });
+  
+    // Recursively build the tree for each child
+    const childrenWithNested = await Promise.all(
+      children.map((child) => this.buildAssetTree(child))
+    );
 
-    const tree = {
-      id: asset.id,
-      name: asset.name,
-      rfid: asset.rfid,
-      asset_type: asset.asset_type,
-      parent_asset: asset.parent_asset
-        ? {
-            id: asset.parent_asset.id,
-            name: asset.parent_asset.name,
-            rfid: asset.parent_asset.rfid,
-          }
-        : null,
-      children: await Promise.all(
-        children.map((child) => this.buildAssetTree(child)),
-      ),
-    };
-
-    return tree;
+    console.log("children", children)
+  
+    return { ...asset, children: childrenWithNested };
   }
 
   async getByRfid(rfid: string) {
@@ -118,8 +108,8 @@ export class AssetService {
         throw new HttpException('Asset data not found', 404);
       }
 
-      // return this.buildAssetTree(asset);
-      return data;
+      return this.buildAssetTree(data);
+      // return data;
     } catch (error) {
       throw new Error('Error Get Asset by id: ' + error.message);
     }
@@ -148,8 +138,8 @@ export class AssetService {
         });
       }
 
-      // return this.buildAssetTree(asset);
-      return data;
+      return this.buildAssetTree(data);
+      // return data;
     } catch (error) {
       throw new Error('Error Get Asset by id: ' + error.message);
     }
@@ -236,6 +226,7 @@ export class AssetService {
               );
             }
             newAsset.parent_asset = parentAsset;
+            newAsset.status = 'active';
           }
           break;
       }
@@ -361,6 +352,8 @@ export class AssetService {
         }
       }
 
+      logPayload.asset_type = existingAsset.asset_type;
+
       if (body.hasOwnProperty('paramsValue')) {
         existingAsset.paramsValue = {
           ...existingAsset.paramsValue,
@@ -370,7 +363,6 @@ export class AssetService {
         logPayload.paramsValue = existingAsset.paramsValue;
         logPayload.asset_id = existingAsset.id;
         logPayload.flow = 'pengukuran';
-        logPayload.asset_type = existingAsset.asset_type;
         logPayload.parent_asset_id = existingAsset.parent_asset?.id;
 
         // update maintenance flow to 'pengukuran'
@@ -517,7 +509,7 @@ export class AssetService {
       await queryRunner.manager.update(
         Asset,
         { id },
-        { name: randomName }
+        { name: randomName, rfid: null }
       );
 
       await queryRunner.manager.softDelete(Asset, { id });

@@ -81,8 +81,8 @@ export class AssetController {
   @ApiBearerAuth()
   @Permissions('assetManagement.updateAsset')
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() body: CreateUpdateAssetDto) {
-    return this.assetService.update(id, body);
+  async update(@Param('id') id: string, @Body() body: CreateUpdateAssetDto, @GetUser() user: IUserRequest) {
+    return this.assetService.update(id, body, user);
   }
 
   @ApiOperation({
