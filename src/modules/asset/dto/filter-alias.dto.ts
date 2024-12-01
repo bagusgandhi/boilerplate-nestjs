@@ -26,7 +26,7 @@ export class FilterAliasDto extends PaginationDto {
     description: 'The Parrent of Asset',
   })
   @IsUUID()
-  @IsNotEmpty() // Optional if parentAsset can be null
+  @IsOptional() // Optional if parentAsset can be null
   parent_asset_id?: string; // This will hold the ID of the parent asset
 
   @ApiProperty({
