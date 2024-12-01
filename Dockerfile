@@ -22,3 +22,4 @@ RUN npm run build
 EXPOSE 4000
 
 # Run the web service on container startup
+CMD ["node", "dist/main.js"]
