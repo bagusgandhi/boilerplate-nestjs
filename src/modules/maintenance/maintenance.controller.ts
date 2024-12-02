@@ -5,6 +5,7 @@ import { CreateUpdateMaintenanceDto } from './dto/create-maintenance.dto';
 import { ParamsUpdateMaintenanceDto } from './dto/params-update-maintenance.dto';
 import { PaginationDto } from 'src/global/dto/pagination.dto';
 import { UuidParamDto } from 'src/global/dto/params-id.dto';
+import { FilterListMaintenanceDto } from './dto/filter-list-maintenance.dto';
 
 @ApiTags('Maintenance')
 @Controller('maintenance')
@@ -34,7 +35,7 @@ export class MaintenanceController {
   })
   @ApiBearerAuth()
   @Get()
-  async getAll(@Query() query: PaginationDto) {
+  async getAll(@Query() query: FilterListMaintenanceDto) {
     return this.maintenanceService.getAll(query);
   }
 
