@@ -71,6 +71,7 @@ export class MaintenanceLogService {
   ) {
     let assetData: Asset | undefined = undefined, 
       parentAssetData: Asset | undefined = undefined,
+      gerbongAssetData: Asset | undefined = undefined,
       flowData: Flow | undefined = undefined;
 
     body.asset_id &&
@@ -81,6 +82,11 @@ export class MaintenanceLogService {
     body.parent_asset_id &&
       (parentAssetData = await this.assetService.getWithEntityManager(
         body.parent_asset_id,
+        queryRunner.manager,
+      ));
+    body.gerbong_asset_id &&
+      (gerbongAssetData = await this.assetService.getWithEntityManager(
+        body.gerbong_asset_id,
         queryRunner.manager,
       ));
     body.flow && (flowData = await this.flowService.getByName(body.flow));
@@ -94,6 +100,7 @@ export class MaintenanceLogService {
     newMaintenanceLog.details = body.details;
     newMaintenanceLog.asset_type = body.asset_type;
     newMaintenanceLog.user = user;
+    newMaintenanceLog.gerbong_asset = gerbongAssetData;
 
     // Save the maintenance record using the provided transaction.
     return queryRunner.manager.save(MaintenanceLog, newMaintenanceLog);
