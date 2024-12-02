@@ -10,6 +10,7 @@ import { Flow } from '../flow/entities/flow.entity';
 import { AssetType } from '../asset/dto/create-update-asset.dto';
 import { PaginationDto } from 'src/global/dto/pagination.dto';
 import { MaintenanceLogService } from '../maintenance-log/maintenance-log.service';
+import { FilterListMaintenanceDto } from './dto/filter-list-maintenance.dto';
 
 @Injectable()
 export class MaintenanceService {
@@ -46,28 +47,33 @@ export class MaintenanceService {
         relations: ['asset', 'flow'],
       });
 
-      if (!data) {
-        throw new HttpException('Flow data not found', 404);
-      }
-
       return data;
     } catch (error) {
       throw new Error('Error Get flow by id: ' + error.message);
     }
   }
 
-  async getAll(params: PaginationDto) {
+  async getAll(params: FilterListMaintenanceDto) {
     try {
       const query = this.maintenanceRepository
         .createQueryBuilder('maintenance')
+        .leftJoinAndSelect('maintenance.asset', 'asset')
+        .leftJoinAndSelect('maintenance.flow', 'flow')
         .orderBy(params.order)
         .skip((params?.page - 1) * params?.limit)
         .take(params?.limit);
 
-      if (params?.search) {
-        query.andWhere('maintenance.asset.name LIKE :search', {
-          search: `%${params?.search}%`,
+      if (params?.is_maintenance) {
+        query.andWhere('maintenance.is_maintenance = :is_maintenance', {
+          is_maintenance: params?.is_maintenance,
         });
+      }
+
+      if (params?.search) {
+        query.andWhere(
+          '(asset.name LIKE :search OR flow.name LIKE :search)', // Search in asset name or flow name
+          { search: `%${params?.search}%` },
+        );
       }
 
       const [results, total] = await query.getManyAndCount();
@@ -97,15 +103,19 @@ export class MaintenanceService {
           AssetType.GERBONG,
         ));
 
-      const existingMaintenance = await this.maintenanceRepository.findOneBy({
-        asset: assetData,
-      });
+      const existingMaintenance = await this.maintenanceRepository
+        .createQueryBuilder('maintenance')
+        .leftJoinAndSelect('maintenance.asset', 'asset') // LEFT JOIN with Asset entity
+        .where('asset.id = :assetId', { assetId: assetData.id }) // Filter based on the asset ID
+        .getOne();
 
       if (!existingMaintenance) {
-        throw new HttpException('Flow data not found', 404);
+        throw new HttpException('maaintenance data not found', 404);
       }
 
       flowData && (existingMaintenance.flow = flowData);
+      flowData && (existingMaintenance.is_maintenance = true);
+
 
       const result = await queryRunner.manager.save(
         Maintenance,
@@ -163,9 +173,13 @@ export class MaintenanceService {
       ));
     body.flow && (flowData = await this.flowService.getByName(body.flow));
 
+    // console.log("assetData", assetData)
+
     const newMaintenance = new Maintenance();
     newMaintenance.asset = assetData;
     newMaintenance.flow = flowData;
+
+    flowData && (newMaintenance.is_maintenance = true);
 
     // Save the maintenance record using the provided transaction.
     return queryRunner.manager.save(Maintenance, newMaintenance);
@@ -210,4 +224,5 @@ export class MaintenanceService {
       await queryRunner.release();
     }
   }
+  
 }
