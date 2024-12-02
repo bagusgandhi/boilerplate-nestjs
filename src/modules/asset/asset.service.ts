@@ -233,12 +233,12 @@ export class AssetService {
 
       const result = await queryRunner.manager.save(Asset, newAsset);
 
-      // if (body.asset_type === AssetType.GERBONG) {
-      //   await this.maintenanceService.createWithTransaction(queryRunner, {
-      //     asset_id: result.id,
-      //     flow: 'inisialisasi',
-      //   });
-      // }
+      if (body.asset_type === AssetType.GERBONG) {
+        await this.maintenanceService.createWithTransaction(queryRunner, {
+          asset_id: result.id,
+          flow: undefined,
+        });
+      }
 
       // insert maintenance log
       const logPayload: CreateMaintenanceLogDto = {
@@ -354,7 +354,7 @@ export class AssetService {
 
       logPayload.asset_type = existingAsset.asset_type;
 
-      if (body.hasOwnProperty('paramsValue')) {
+      if (body.hasOwnProperty('paramsValue') && existingAsset.asset_type === AssetType.KEPING_RODA) {
         existingAsset.paramsValue = {
           ...existingAsset.paramsValue,
           ...body.paramsValue,
@@ -364,10 +364,13 @@ export class AssetService {
         logPayload.asset_id = existingAsset.id;
         logPayload.flow = 'pengukuran';
         logPayload.parent_asset_id = existingAsset.parent_asset?.id;
+        
+        const gerbong = await this.findGerbongByBogie(existingAsset.id);
+        logPayload.gerbong_asset_id = gerbong?.id;
 
-        // update maintenance flow to 'pengukuran'
-        await this.maintenanceService.update({
-          asset_id: existingAsset.parent_asset?.id, // case 
+        // upsert maintenance flow to 'pengukuran'
+        await this.maintenanceService.upsert({
+          asset_id: gerbong?.id, // case 
           flow: 'pengukuran',
         });
       }
@@ -525,4 +528,32 @@ export class AssetService {
       await queryRunner.release();
     }
   }
+
+  async findGerbongByBogie(id: string) {
+    try {
+      // Fetch the gerbong directly using the parent_asset relationship chain
+      const data = await this.assetRepository.findOne({
+        where: { id },
+        relations: [
+          'parent_asset',        // Bogie
+          'parent_asset.parent_asset', // Gerbong
+        ],
+      });
+  
+      if (!data) {
+        throw new Error('Asset not found with the given ID');
+      }
+  
+      const gerbong = data.parent_asset?.parent_asset;
+  
+      if (!gerbong || gerbong.asset_type !== 'Gerbong') {
+        throw new Error('Gerbong not found in the asset hierarchy');
+      }
+  
+      return gerbong; // Return the gerbong asset
+    } catch (error) {
+      throw new Error('Error while finding Gerbong by Bogie ID: ' + error.message);
+    }
+  }
+  
 }
