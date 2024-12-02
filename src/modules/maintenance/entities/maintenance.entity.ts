@@ -24,4 +24,7 @@ export class Maintenance extends BaseEntity {
 
   @Column({ nullable: true })
   program: string;
+
+  @Column({ default: false })
+  is_maintenance: boolean;
 }
