@@ -12,10 +12,11 @@ const typeOrmConfig: TypeOrmModuleOptions = {
   database: DB_NAME,
   entities: ['dist/**/*.entity{.ts,.js}'],
   // entities: ['src/**/*.entity{.ts,.js}'],
+  // synchronize: false,
   synchronize: false,
   dropSchema: false,
   logging: true,
-  migrations: ['src/database/migrations/**/*.ts'],
+  migrations: ['dist/database/migrations/**/*.ts'],
   migrationsTableName: 'migration_table',
 };
 

@@ -12,12 +12,12 @@ const options: DataSourceOptions & SeederOptions = {
   database: DB_NAME,
   entities: ['dist/**/*.entity{.ts,.js}'],
   // entities: ['src/**/*.entity{.ts,.js}'],
-  synchronize: false, // dont change it
-  // synchronize: true, //
+  // synchronize: false, // dont change it
+  synchronize: false, //
   dropSchema: false,
   logging: true,
   seeds: ['dist/database/seeds/**/*.js'],
-  migrations: ['src/database/migrations/**/*.ts'],
+  migrations: ['dist/database/migrations/**/*.ts'],
   migrationsTableName: 'migration_table',
 };
 
