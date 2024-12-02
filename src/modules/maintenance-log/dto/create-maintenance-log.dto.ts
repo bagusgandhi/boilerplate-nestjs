@@ -74,6 +74,14 @@ export class CreateMaintenanceLogDto {
   parent_asset_id?: string; // This will hold the ID of the parent asset
 
   @ApiProperty({
+    example: 'b9c63c51-20ae-4fe6-9a39-9641e7d4ecc5',
+    description: 'The Gerbong of Asset',
+  })
+  @IsUUID()
+  @IsOptional() // Optional if parentAsset can be null
+  gerbong_asset_id?: string;
+
+  @ApiProperty({
     example: { "diameter": 800, "flank": 10 },
     description: 'The params value maintenance',
   })

@@ -36,6 +36,9 @@ export class MaintenanceLog extends BaseEntity {
   @ManyToOne(() => Asset, (asset) => asset.maintenance) // specify inverse side as a second parameter
   asset: Asset
 
+  @ManyToOne(() => Asset, (asset) => asset.maintenance) // Nullable foreign key referencing Asset
+  gerbong_asset: Asset;
+
   @ManyToOne(() => Flow, (flow) => flow.maintenances)
   flow: Flow
 
