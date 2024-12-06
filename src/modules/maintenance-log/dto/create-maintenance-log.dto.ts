@@ -96,4 +96,13 @@ export class CreateMaintenanceLogDto {
   @IsObject()
   @IsOptional()
   details?: Record<string, any>;
+
+  @ApiProperty({
+    example: 'Program Maintenance',
+    description: 'The Program of maintenance',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  program?: string;
 }

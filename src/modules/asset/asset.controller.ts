@@ -18,6 +18,7 @@ import { RfidParamDto } from 'src/global/dto/params-rfid.dto';
 import { GetUser, IUserRequest } from 'src/decorators/get-user.decorator';
 import { FilterAliasDto } from './dto/filter-alias.dto';
 import { NameParamDto } from 'src/global/dto/params-name.dto';
+import { SwapAssetDto } from './dto/swap-asset.dto';
 
 @ApiTags('Asset')
 @Controller('asset')
@@ -31,7 +32,7 @@ export class AssetController {
   @Permissions('assetManagement.viewAllAsset')
   @Get()
   async getAll(@Query() query: FilterAliasDto) {
-    console.log(query)
+    console.log("query", query)
     return this.assetService.getAll(query);
   }
 
@@ -73,6 +74,15 @@ export class AssetController {
   @Get(':id')
   async get(@Param() params: UuidParamDto) {
     return this.assetService.get(params.id as string);
+  }
+
+  @ApiOperation({
+    summary: 'Swap asset the asset',
+  })
+  @ApiBearerAuth()
+  @Post('swap')
+  async swapAsset(@Body() body: SwapAssetDto, @GetUser() user: IUserRequest) {
+    return this.assetService.swapAsset(body, user);
   }
 
   @ApiOperation({

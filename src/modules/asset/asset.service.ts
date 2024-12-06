@@ -20,6 +20,7 @@ import { IUserRequest } from 'src/decorators/get-user.decorator';
 import { UserService } from '../user/user.service';
 import { FilterAliasDto } from './dto/filter-alias.dto';
 import { v4 as uuidv4 } from 'uuid';
+import { applyDynamicOrder } from 'src/utils/dynamic-order';
 // import { MaintenanceService } from '../maintenance/maintenance.service';
 // import { FlowService } from '../flow/flow.service';
 
@@ -79,16 +80,21 @@ export class AssetService {
   private async buildAssetTree(asset: Asset): Promise<any> {
     const children = await this.assetRepository.find({
       where: { parent_asset: { id: asset.id } }, // Load children of the current asset
-      relations: ['parent_asset', 'children', 'maintenance', 'maintenance.flow'],
+      relations: [
+        'parent_asset',
+        'children',
+        'maintenance',
+        'maintenance.flow',
+      ],
     });
-  
+
     // Recursively build the tree for each child
     const childrenWithNested = await Promise.all(
-      children.map((child) => this.buildAssetTree(child))
+      children.map((child) => this.buildAssetTree(child)),
     );
 
-    console.log("children", children)
-  
+    console.log('children', children);
+
     return { ...asset, children: childrenWithNested };
   }
 
@@ -243,11 +249,14 @@ export class AssetService {
       // insert maintenance log
       const logPayload: CreateMaintenanceLogDto = {
         asset_id: result.id,
-        flow: 'inisialisasi',
+        flow: body.flow,
         asset_type: body.asset_type,
         parent_asset_id: body.parent_asset_id,
         bogie: body.bogie,
         paramsValue: body.paramsValue,
+        details: {
+          info: 'insert new asset',
+        },
       };
 
       await this.maintenanceLogService.createWithTransaction(
@@ -354,7 +363,10 @@ export class AssetService {
 
       logPayload.asset_type = existingAsset.asset_type;
 
-      if (body.hasOwnProperty('paramsValue') && existingAsset.asset_type === AssetType.KEPING_RODA) {
+      if (
+        body.hasOwnProperty('paramsValue') &&
+        existingAsset.asset_type === AssetType.KEPING_RODA
+      ) {
         existingAsset.paramsValue = {
           ...existingAsset.paramsValue,
           ...body.paramsValue,
@@ -362,16 +374,38 @@ export class AssetService {
 
         logPayload.paramsValue = existingAsset.paramsValue;
         logPayload.asset_id = existingAsset.id;
-        logPayload.flow = 'pengukuran';
+        logPayload.flow = body.flow;
         logPayload.parent_asset_id = existingAsset.parent_asset?.id;
-        
+
         const gerbong = await this.findGerbongByBogie(existingAsset.id);
         logPayload.gerbong_asset_id = gerbong?.id;
+        logPayload.program = body.program;
 
         // upsert maintenance flow to 'pengukuran'
         await this.maintenanceService.upsert({
-          asset_id: gerbong?.id, // case 
-          flow: 'pengukuran',
+          asset_id: gerbong?.id, // case
+          flow: body.flow,
+          program: body.program,
+        });
+      }
+
+      if (body.status === 'not_feasible') {
+        // insert maintenance log
+        logPayload.flow = body.flow;
+        logPayload.details = {
+          details: {
+            info: 'remove asset',
+          },
+        };
+        (logPayload.asset_id = existingAsset.id),
+          (logPayload.asset_type = AssetType.KEPING_RODA);
+
+        const gerbong = await this.findGerbongByBogie(existingAsset.id);
+
+        await this.maintenanceService.upsert({
+          asset_id: gerbong?.id, // case
+          flow: body.flow,
+          program: body.program,
         });
       }
 
@@ -394,7 +428,7 @@ export class AssetService {
     }
   }
 
-  async swapAsset(body: SwapAssetDto) {
+  async swapAsset(body: SwapAssetDto, user?: IUserRequest) {
     const queryRunner =
       this.assetRepository.manager.connection.createQueryRunner();
     await queryRunner.connect();
@@ -402,6 +436,10 @@ export class AssetService {
     const { active_asset_id, inactive_asset_id, parent_asset_id } = body;
 
     try {
+      const userData: User = await this.userService.findUserById(
+        user.id as any,
+      );
+
       const parentAsset = await this.assetRepository.findOne({
         where: { id: parent_asset_id },
       });
@@ -416,27 +454,35 @@ export class AssetService {
       const notInUsedAsset = await this.assetRepository.findOneBy({
         id: inactive_asset_id,
       });
-      notInUsedAsset.parent_asset = null;
+      // notInUsedAsset.parent_asset = null;
       notInUsedAsset.status = 'inactive';
       await queryRunner.manager.save(Asset, notInUsedAsset);
 
+      const assetData = await this.get(parent_asset_id);
+
+      await this.maintenanceService.upsert({
+        asset_id: assetData.parent_asset?.id, // case
+        flow: body.flow,
+      });
+
       // insert maintenance log
       const logPayload = {
-        flow: 'inisialisasi',
+        flow: body.flow,
         details: {
           info: 'swap asset',
           data: {
             inUsedAsset,
-            notInUsedAsset
-          }
+            notInUsedAsset,
+          },
         },
-        parent_asset_id: parentAsset.id
-      }
+        parent_asset_id: parentAsset.id,
+        asset_type: AssetType.KEPING_RODA,
+      };
 
       await this.maintenanceLogService.createWithTransaction(
         queryRunner,
         logPayload,
-        null,
+        userData,
       );
 
       await queryRunner.commitTransaction();
@@ -446,17 +492,20 @@ export class AssetService {
         notInUsedAsset,
       };
     } catch (error) {
-      throw new Error('Error Get flow data: ' + error.message);
+      throw new Error('Error Swap Asset: ' + error.message);
     }
   }
 
   async getAll(params: FilterAliasDto) {
     try {
-      const query = this.assetRepository
+      let query = this.assetRepository
         .createQueryBuilder('asset')
-        .orderBy(params.order)
-        .skip((params?.page - 1) * params?.limit)
-        .take(params?.limit);
+        .leftJoinAndSelect('asset.maintenance', 'maintenance');
+      // .orderBy(params.order)
+
+      if (!params?.viewAll) {
+        query.skip((params?.page - 1) * params?.limit).take(params?.limit);
+      }
 
       if (params?.search) {
         query.andWhere('asset.name LIKE :search', {
@@ -464,24 +513,40 @@ export class AssetService {
         });
       }
 
-      if(params?.asset_type) {
+      if (params?.asset_type) {
         query.andWhere('asset.asset_type = :asset_type', {
           asset_type: params?.asset_type,
         });
       }
 
-      if(params?.parent_asset_id) {
+      if (params?.asset_types) {
+        query.andWhere('asset.asset_type IN (:...asset_types)', {
+          asset_types: params.asset_types,
+        });
+      }
+
+      if (params?.parent_asset_id) {
         query.andWhere('asset.parentAssetId = :parent_asset_id', {
           parent_asset_id: params?.parent_asset_id,
         });
       }
 
-      if(params?.children_alias) {
+      if (params?.children_alias) {
         query.andWhere('asset.alias = :children_alias', {
           children_alias: params?.children_alias,
         });
       }
 
+      if (params?.is_maintenance !== undefined) {
+        query.andWhere('maintenance.is_maintenance = :is_maintenance', {
+          is_maintenance: params?.is_maintenance,
+        });
+      }
+
+      if (params?.order) {
+        const allowedColumns = ['created_at', 'updated_at', 'name'];
+        query = applyDynamicOrder(query, 'asset', params.order, allowedColumns);
+      }
 
       const [results, total] = await query.getManyAndCount();
 
@@ -491,7 +556,7 @@ export class AssetService {
         results,
       };
     } catch (error) {
-      throw new Error('Error Get flow data: ' + error.message);
+      throw new Error('Error Get asset data: ' + error.message);
     }
   }
 
@@ -512,7 +577,7 @@ export class AssetService {
       await queryRunner.manager.update(
         Asset,
         { id },
-        { name: randomName, rfid: null }
+        { name: randomName, rfid: null },
       );
 
       await queryRunner.manager.softDelete(Asset, { id });
@@ -535,25 +600,26 @@ export class AssetService {
       const data = await this.assetRepository.findOne({
         where: { id },
         relations: [
-          'parent_asset',        // Bogie
+          'parent_asset', // Bogie
           'parent_asset.parent_asset', // Gerbong
         ],
       });
-  
+
       if (!data) {
         throw new Error('Asset not found with the given ID');
       }
-  
+
       const gerbong = data.parent_asset?.parent_asset;
-  
+
       if (!gerbong || gerbong.asset_type !== 'Gerbong') {
         throw new Error('Gerbong not found in the asset hierarchy');
       }
-  
+
       return gerbong; // Return the gerbong asset
     } catch (error) {
-      throw new Error('Error while finding Gerbong by Bogie ID: ' + error.message);
+      throw new Error(
+        'Error while finding Gerbong by Bogie ID: ' + error.message,
+      );
     }
   }
-  
 }

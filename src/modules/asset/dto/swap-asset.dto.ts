@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { AssetType, CarriageType } from './create-update-asset.dto';
 import { PaginationDto } from 'src/global/dto/pagination.dto';
 
@@ -27,4 +27,13 @@ export class SwapAssetDto {
   @IsUUID()
   @IsNotEmpty() // Optional if parentAsset can be null
   parent_asset_id?: string; // This will hold the ID of the parent asset
+
+  @ApiProperty({
+    example: 'inisialisasi',
+    description: 'The flow / phase maintenance name',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  flow?: string;
 }

@@ -45,6 +45,9 @@ export class MaintenanceLog extends BaseEntity {
   @ManyToOne(() => User, (user) => user.maintenance_log)
   user: User
 
+  @Column({ nullable: true })
+  program: string;
+
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date;
 

@@ -1,8 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { ArrayNotEmpty, IsArray, IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID, ValidateIf } from 'class-validator';
 import { AssetType } from './create-update-asset.dto';
 import { UuidParamDto } from 'src/global/dto/params-id.dto';
 import { PaginationDto } from 'src/global/dto/pagination.dto';
+import { Transform, Type } from 'class-transformer';
 
 export class FilterAliasDto extends PaginationDto {
   @ApiProperty({
@@ -13,6 +14,22 @@ export class FilterAliasDto extends PaginationDto {
   @IsString()
   @IsOptional()
   children_alias?: string;
+
+  @ApiProperty({
+    // example: 'Bogie',
+    description: 'Filter by The Asset Types',
+    required: false,
+    // type: [String], // To indicate it can also be an array
+  })
+  @IsOptional()
+  // @ValidateIf((o) => !Array.isArray(o.asset_type)) // Validate only if not an array
+  // @IsEnum(AssetType, { each: false }) // Validate single value
+  // @ValidateIf((o) => Array.isArray(o.asset_type)) // Validate only if it's an array
+  @IsArray()
+  @ArrayNotEmpty() // Ensure the array is not empty
+  @IsEnum(AssetType, { each: true }) // Validate each element in the array
+  // @Type(() => String) // Transform input into a string array if necessary
+  asset_types?: AssetType | AssetType[];
 
   @ApiProperty({
     example: 'Bogie',
@@ -40,4 +57,14 @@ export class FilterAliasDto extends PaginationDto {
   @IsString()
   @IsOptional()
   flow?: string;
+
+  @ApiProperty({
+    description: 'Status Maintenance',
+    required: false,
+  })
+  @Transform(({ value }) => (value === undefined || value === null ? undefined : value === 'true' || value === true))
+  @IsBoolean()
+  @IsOptional()
+  is_maintenance?: boolean;
+
 }

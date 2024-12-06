@@ -5,8 +5,10 @@ import {
   IsObject,
   IsEnum,
   IsUUID,
+  IsBoolean,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 
 export enum BogieType {
   Bogie_1_1 = '1.1',
@@ -34,7 +36,25 @@ export class CreateUpdateMaintenanceDto {
     description: 'The flow / phase maintenance name',
   })
   @IsString()
-  @IsNotEmpty()
-  flow: string;
+  @IsOptional()
+  flow?: string;
+
+  @ApiProperty({
+    example: 'Program Maintenance',
+    description: 'The Program of maintenance',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  program?: string;
+
+  @ApiProperty({
+    description: 'Status Maintenance',
+    required: false,
+  })
+  @Transform(({ value }) => (value === undefined || value === null ? undefined : value === 'true' || value === true))
+  @IsBoolean()
+  @IsOptional()
+  is_maintenance?: boolean;
 
 }

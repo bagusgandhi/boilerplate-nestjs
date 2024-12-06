@@ -31,6 +31,12 @@ export enum BogieType {
   Bogie_2_4 = '2.4'
 }
 
+export enum StatusType {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  NOT_FEASIBLE = 'not_feasible'
+}
+
 export class CreateUpdateAssetDto {
   @ApiProperty({
     example: 'JOKER',
@@ -73,6 +79,14 @@ export class CreateUpdateAssetDto {
   factory?: string;
 
   @ApiProperty({
+    description: 'The Location of Asset Storage',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  location?: string;
+
+  @ApiProperty({
     example: '1.1',
     description: 'Bogie',
   })
@@ -84,9 +98,9 @@ export class CreateUpdateAssetDto {
     example: 'b9c63c51-20ae-4fe6-9a39-9641e7d4ecc5',
     description: 'The Parrent of Asset',
   })
-  @IsUUID()
   @IsOptional() // Optional if parentAsset can be null
-  parent_asset_id?: string; // This will hold the ID of the parent asset
+  // @IsUUID()
+  parent_asset_id?: string | null; // This will hold the ID of the parent asset
 
   @ApiProperty({
     example: { "diameter": 800, "flank": 10 },
@@ -95,4 +109,31 @@ export class CreateUpdateAssetDto {
   @IsObject()
   @IsOptional()
   paramsValue?: Record<string, any>;
+
+  @ApiProperty({
+    example: 'inisialisasi',
+    description: 'The flow / phase maintenance name',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  flow?: string;
+
+  @ApiProperty({
+    example: 'Status Asset',
+    description: 'The Status of Asset',
+    required: false,
+  })
+  @IsEnum(StatusType)
+  @IsOptional()
+  status?: StatusType;
+
+  @ApiProperty({
+    example: 'Program Maintenance',
+    description: 'The Program of maintenance',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  program?: string;
 }

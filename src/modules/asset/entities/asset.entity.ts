@@ -30,6 +30,9 @@ export class Asset extends BaseEntity {
   alias: string;
 
   @Column({ nullable: true })
+  location: string;
+
+  @Column({ nullable: true })
   description: string;
 
   @Index()
@@ -54,10 +57,10 @@ export class Asset extends BaseEntity {
   @Column({
     type: 'varchar',
     length: 20,
-    enum: ['active', 'not feasible', 'inactive'],
+    enum: ['active', 'not_feasible', 'inactive'],
     nullable: true
   })
-  status: 'active' | 'not feasible' | 'inactive';
+  status: 'active' | 'not_feasible' | 'inactive';
 
   @Column({ type: 'jsonb', nullable: true })
   paramsValue: Record<string, any>; // Flexible JSON object

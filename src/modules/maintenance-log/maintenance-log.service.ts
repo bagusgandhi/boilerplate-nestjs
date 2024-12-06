@@ -60,7 +60,7 @@ export class MaintenanceLogService {
         results,
       };
     } catch (error) {
-      throw new Error('Error Get flow data: ' + error.message);
+      throw new Error('Error Get maintenance-log data: ' + error.message);
     }
   }
 

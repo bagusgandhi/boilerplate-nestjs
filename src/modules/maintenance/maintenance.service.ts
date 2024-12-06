@@ -11,6 +11,7 @@ import { AssetType } from '../asset/dto/create-update-asset.dto';
 import { PaginationDto } from 'src/global/dto/pagination.dto';
 import { MaintenanceLogService } from '../maintenance-log/maintenance-log.service';
 import { FilterListMaintenanceDto } from './dto/filter-list-maintenance.dto';
+import { applyDynamicOrder } from 'src/utils/dynamic-order';
 
 @Injectable()
 export class MaintenanceService {
@@ -20,7 +21,7 @@ export class MaintenanceService {
     @Inject(forwardRef(() => AssetService))
     private readonly assetService: AssetService,
     private flowService: FlowService,
-    private maintenanceLogService: MaintenanceLogService
+    private maintenanceLogService: MaintenanceLogService,
   ) {}
 
   async get(id: string) {
@@ -55,13 +56,14 @@ export class MaintenanceService {
 
   async getAll(params: FilterListMaintenanceDto) {
     try {
-      const query = this.maintenanceRepository
+      let query = this.maintenanceRepository
         .createQueryBuilder('maintenance')
         .leftJoinAndSelect('maintenance.asset', 'asset')
         .leftJoinAndSelect('maintenance.flow', 'flow')
-        .orderBy(params.order)
-        .skip((params?.page - 1) * params?.limit)
-        .take(params?.limit);
+
+      if (!params?.viewAll) {
+        query.skip((params?.page - 1) * params?.limit).take(params?.limit);
+      }
 
       if (params?.is_maintenance) {
         query.andWhere('maintenance.is_maintenance = :is_maintenance', {
@@ -76,6 +78,11 @@ export class MaintenanceService {
         );
       }
 
+      if(params?.order){
+        const allowedColumns = ['created_at', 'updated_at'];
+        query = applyDynamicOrder(query, 'maintenance', params.order, allowedColumns);
+      }
+
       const [results, total] = await query.getManyAndCount();
 
       return {
@@ -84,7 +91,7 @@ export class MaintenanceService {
         results,
       };
     } catch (error) {
-      throw new Error('Error Get flow data: ' + error.message);
+      throw new Error('Error Get maintenance data: ' + error.message);
     }
   }
 
@@ -115,8 +122,10 @@ export class MaintenanceService {
 
       flowData && (existingMaintenance.flow = flowData);
       flowData && (existingMaintenance.is_maintenance = true);
-
-
+      
+      body.is_maintenance === false && (existingMaintenance.is_maintenance = false);
+      body.flow === null && (existingMaintenance.flow = null);
+      
       const result = await queryRunner.manager.save(
         Maintenance,
         existingMaintenance,
@@ -187,14 +196,13 @@ export class MaintenanceService {
 
   async upsert(body: CreateUpdateMaintenanceDto) {
     let assetData: Asset | undefined = undefined,
-    flowData: Flow | undefined = undefined;
+      flowData: Flow | undefined = undefined;
     const queryRunner =
-    this.maintenanceRepository.manager.connection.createQueryRunner();
+      this.maintenanceRepository.manager.connection.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
-
       body.flow && (flowData = await this.flowService.getByName(body.flow));
       body.asset_id &&
         (assetData = await this.assetService.get(
@@ -202,8 +210,8 @@ export class MaintenanceService {
           AssetType.GERBONG,
         ));
 
-      if (!assetData || !flowData) {
-        throw new Error('Asset or Flow not found');
+      if (!assetData) {
+        throw new Error('Asset not found');
       }
 
       let maintenanceData = await this.getByAssetId(assetData.id);
@@ -216,13 +224,13 @@ export class MaintenanceService {
 
       await queryRunner.commitTransaction();
       return maintenanceData;
-      
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      throw new Error('Error creating or updating maintenance data: ' + error.message);
+      throw new Error(
+        'Error creating or updating maintenance data: ' + error.message,
+      );
     } finally {
       await queryRunner.release();
     }
   }
-  
 }
