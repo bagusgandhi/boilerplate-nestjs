@@ -148,7 +148,8 @@ export class MaintenanceSummaryService {
       FROM
           averages
       GROUP BY
-          month_year, total_count;
+          month_year, total_count
+      ORDER BY month_year ASC;
     `;
   
     // Execute query with parameters
