@@ -93,7 +93,7 @@ export class AssetService {
       children.map((child) => this.buildAssetTree(child)),
     );
 
-    console.log('children', children);
+    // console.log('children', children);
 
     return { ...asset, children: childrenWithNested };
   }
@@ -287,7 +287,16 @@ export class AssetService {
       const userData: User = await this.userService.findUserById(
         user.id as any,
       );
-      const existingAsset = await this.assetRepository.findOneBy({ id });
+      
+      const existingAsset = await this.assetRepository.findOne({
+        where: { id },
+        relations: [
+          'parent_asset',
+          'children'
+        ],
+      });
+
+      console.log("existingAsset", existingAsset)
 
       if (!existingAsset) {
         throw new HttpException('Asset data not found', 404);
@@ -411,6 +420,7 @@ export class AssetService {
 
       const result = await queryRunner.manager.save(Asset, existingAsset);
 
+      // console.log(logPayload)
       // insert maintenance log
       await this.maintenanceLogService.createWithTransaction(
         queryRunner,
