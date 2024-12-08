@@ -26,6 +26,15 @@ export class MaintenanceSummaryController {
     return this.maintenanaceSummaryService.getAllMonthlySeries(query);
   }
 
+  @ApiOperation({
+    summary: 'Get all Maintenance Log data count.',
+  })
+  @ApiBearerAuth()
+  @Get('count')
+  async getAllCount(@Query() query: FilterMaintenanceSummaryMonthlyAvgDto) {
+    return this.maintenanaceSummaryService.getAllMonthlyCount(query);
+  }
+
 
   @ApiOperation({
     summary: 'Get all Maintenance Log data.',

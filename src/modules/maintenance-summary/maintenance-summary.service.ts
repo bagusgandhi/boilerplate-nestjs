@@ -167,6 +167,78 @@ export class MaintenanceSummaryService {
     // Execute query with parameters
     return await this.maintenanceSummaryMonthlyAvgRepository.query(query, parameters);
   }
+
+  async getAllMonthlyCount(
+    params: FilterMaintenanceSummaryMonthlyAvgDto,
+  ): Promise<any> {
+    const { train_set, gerbong, startedAt, endedAt } = params;
+  
+    let whereClauses: string[] = [];
+    let parameters: any[] = [];
+  
+    // Use a counter for parameter placeholders
+    let paramIndex = 1;
+  
+    // Add train_set filter if provided
+    if (train_set && train_set.length > 0) {
+      whereClauses.push(`"train_set" = ANY($${paramIndex++})`);
+      parameters.push(train_set);
+    }
+  
+    // Add gerbong filter if provided
+    if (gerbong && gerbong.length > 0) {
+      whereClauses.push(`"gerbong" = ANY($${paramIndex++})`);
+      parameters.push(gerbong);
+    }
+  
+    // Add date range filter if provided
+    if (startedAt) {
+      whereClauses.push(`"month_year" >= $${paramIndex++}`);
+      parameters.push(startedAt);
+    }
+  
+    if (endedAt) {
+      whereClauses.push(`"month_year" <= $${paramIndex++}`);
+      parameters.push(endedAt);
+    }
+  
+    // Construct WHERE clause
+    const whereClause =
+      whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+  
+    const query = `
+      WITH 
+          expanded_data AS (
+              SELECT
+                  ml."month_year",
+                  total_count 
+              FROM
+                  mv_maintenance_log_monthly_avg ml 
+              ${whereClause}
+          ),
+          averages AS (
+              SELECT
+                  month_year,
+                  SUM(total_count) AS total_count
+              FROM
+                  expanded_data
+              GROUP BY
+                  month_year
+          )
+      SELECT
+          month_year,
+          total_count,
+          jsonb_object_agg(bogie_type, jsonb_build_object('avg_diameter', avg_diameter, 'avg_flens', avg_flens)) AS avg
+      FROM
+          averages
+      GROUP BY
+          month_year, total_count
+      ORDER BY month_year ASC;
+    `;
+  
+    // Execute query with parameters
+    return await this.maintenanceSummaryMonthlyAvgRepository.query(query, parameters);
+  }
   
 
   async getAllMonthlyKepingRodaAvg(
