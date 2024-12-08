@@ -12,6 +12,9 @@ import { PaginationDto } from 'src/global/dto/pagination.dto';
 import { MaintenanceLogService } from '../maintenance-log/maintenance-log.service';
 import { FilterListMaintenanceDto } from './dto/filter-list-maintenance.dto';
 import { applyDynamicOrder } from 'src/utils/dynamic-order';
+import { User } from '../user/entities/user.entity';
+import { IUserRequest } from 'src/decorators/get-user.decorator';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class MaintenanceService {
@@ -22,6 +25,8 @@ export class MaintenanceService {
     private readonly assetService: AssetService,
     private flowService: FlowService,
     private maintenanceLogService: MaintenanceLogService,
+    private readonly userService: UserService,
+
   ) {}
 
   async get(id: string) {
@@ -95,9 +100,9 @@ export class MaintenanceService {
     }
   }
 
-  async update(body: CreateUpdateMaintenanceDto) {
+  async update(body: CreateUpdateMaintenanceDto, user?: User) {
     let assetData: Asset | undefined = undefined,
-      flowData: Flow | undefined = undefined;
+      flowData: Flow | undefined = undefined, logPayload: any = {};
     const queryRunner =
       this.maintenanceRepository.manager.connection.createQueryRunner();
     await queryRunner.connect();
@@ -125,6 +130,19 @@ export class MaintenanceService {
       
       body.is_maintenance === false && (existingMaintenance.is_maintenance = false);
       body.flow === null && (existingMaintenance.flow = null);
+      body.wo_number && (existingMaintenance.wo_number = body.wo_number);
+
+      logPayload.wo_number = body.wo_number;
+      logPayload.asset_id = assetData.id;
+      logPayload.flow = flowData?.name;
+      logPayload.program = body.program;
+      logPayload.asset_type = assetData.asset_type;
+
+      await this.maintenanceLogService.createWithTransaction(
+        queryRunner,
+        logPayload,
+        user,
+      );
       
       const result = await queryRunner.manager.save(
         Maintenance,
@@ -152,6 +170,8 @@ export class MaintenanceService {
 
     try {
       const result = await this.createWithTransaction(queryRunner, body);
+      
+
 
       // insert action log
       // await this.actionLogRepository.insertData(queryRunner.manager, someData);
@@ -169,11 +189,11 @@ export class MaintenanceService {
   async createWithTransaction(
     queryRunner: QueryRunner,
     body: CreateUpdateMaintenanceDto,
+    user?: User
   ) {
     let assetData: Asset | undefined = undefined,
-      flowData: Flow | undefined = undefined;
-
-    // console.log(body);
+    logPayload: any = {},
+    flowData: Flow | undefined = undefined;
 
     body.asset_id &&
       (assetData = await this.assetService.getWithEntityManager(
@@ -189,21 +209,38 @@ export class MaintenanceService {
     newMaintenance.flow = flowData;
 
     flowData && (newMaintenance.is_maintenance = true);
+    body.wo_number && (newMaintenance.wo_number = body.wo_number);
+
+    logPayload.wo_number = body.wo_number;
+    logPayload.asset_id = assetData.id;
+    logPayload.flow = flowData?.name;
+    logPayload.program = body.program;
+    logPayload.asset_type = assetData.asset_type;
+
+    await this.maintenanceLogService.createWithTransaction(
+      queryRunner,
+      logPayload,
+      user,
+    );
 
     // Save the maintenance record using the provided transaction.
     return queryRunner.manager.save(Maintenance, newMaintenance);
   }
 
-  async upsert(body: CreateUpdateMaintenanceDto) {
-    let assetData: Asset | undefined = undefined,
-      flowData: Flow | undefined = undefined;
+  async upsert(body: CreateUpdateMaintenanceDto, user?: IUserRequest) {
+    let assetData: Asset | undefined = undefined;
+      // flowData: Flow | undefined = undefined;
     const queryRunner =
       this.maintenanceRepository.manager.connection.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
-      body.flow && (flowData = await this.flowService.getByName(body.flow));
+      // body.flow && (flowData = await this.flowService.getByName(body.flow));
+      const userData: User = await this.userService.findUserById(
+        user.id as any,
+      );
+
       body.asset_id &&
         (assetData = await this.assetService.get(
           body.asset_id,
@@ -217,7 +254,7 @@ export class MaintenanceService {
       let maintenanceData = await this.getByAssetId(assetData.id);
 
       if (!maintenanceData) {
-        maintenanceData = await this.createWithTransaction(queryRunner, body);
+        maintenanceData = await this.createWithTransaction(queryRunner, body, userData);
       } else {
         maintenanceData = await this.update(body);
       }
