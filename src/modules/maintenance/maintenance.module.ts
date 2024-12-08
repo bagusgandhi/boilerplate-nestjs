@@ -6,11 +6,13 @@ import { Maintenance } from './entities/maintenance.entity';
 import { FlowModule } from '../flow/flow.module';
 import { AssetModule } from '../asset/asset.module';
 import { MaintenanceLogModule } from '../maintenance-log/maintenance-log.module';
+import { UserModule } from '../user/user.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Maintenance]),
     forwardRef(() => AssetModule),
+    UserModule,
     FlowModule,
     MaintenanceLogModule,
   ],
