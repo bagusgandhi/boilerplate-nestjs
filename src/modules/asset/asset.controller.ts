@@ -32,7 +32,7 @@ export class AssetController {
   @Permissions('assetManagement.viewAllAsset')
   @Get()
   async getAll(@Query() query: FilterAliasDto) {
-    console.log("query", query)
+    // console.log("query", query)
     return this.assetService.getAll(query);
   }
 
