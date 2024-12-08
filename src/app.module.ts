@@ -13,6 +13,7 @@ import { AssetModule } from './modules/asset/asset.module';
 import { MaintenanceLogModule } from './modules/maintenance-log/maintenance-log.module';
 import { MaintenanceModule } from './modules/maintenance/maintenance.module';
 import { HistoryActionLogModule } from './modules/history-action-log/history-action-log.module';
+import { MaintenanceSummaryModule } from './modules/maintenance-summary/maintenance-summary.module';
 
 @Module({
   imports: [
@@ -25,7 +26,8 @@ import { HistoryActionLogModule } from './modules/history-action-log/history-act
     FlowModule,
     MaintenanceModule,
     MaintenanceLogModule,
-    HistoryActionLogModule
+    HistoryActionLogModule,
+    MaintenanceSummaryModule
   ],
   controllers: [],
   providers: [
