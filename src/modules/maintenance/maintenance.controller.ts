@@ -6,6 +6,7 @@ import { ParamsUpdateMaintenanceDto } from './dto/params-update-maintenance.dto'
 import { PaginationDto } from 'src/global/dto/pagination.dto';
 import { UuidParamDto } from 'src/global/dto/params-id.dto';
 import { FilterListMaintenanceDto } from './dto/filter-list-maintenance.dto';
+import { GetUser, IUserRequest } from 'src/decorators/get-user.decorator';
 
 @ApiTags('Maintenance')
 @Controller('maintenance')
@@ -17,8 +18,8 @@ export class MaintenanceController {
   })
   @ApiBearerAuth()
   @Patch()
-  async upsert(@Body() body: CreateUpdateMaintenanceDto) {
-    return this.maintenanceService.upsert(body);
+  async upsert(@Body() body: CreateUpdateMaintenanceDto, @GetUser() user: IUserRequest) {
+    return this.maintenanceService.upsert(body, user);
   }
 
   // @ApiOperation({
