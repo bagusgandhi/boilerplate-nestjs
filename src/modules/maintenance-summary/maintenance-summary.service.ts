@@ -227,8 +227,7 @@ export class MaintenanceSummaryService {
           )
       SELECT
           month_year,
-          total_count,
-          jsonb_object_agg(bogie_type, jsonb_build_object('avg_diameter', avg_diameter, 'avg_flens', avg_flens)) AS avg
+          total_count
       FROM
           averages
       GROUP BY
