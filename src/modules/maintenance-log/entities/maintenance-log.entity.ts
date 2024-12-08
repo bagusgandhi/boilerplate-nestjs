@@ -54,6 +54,9 @@ export class MaintenanceLog extends BaseEntity {
   @UpdateDateColumn({ type: 'timestamptz' })
   updated_at: Date;
 
+  @Column({type: 'varchar', nullable: true })
+  wo_number: string;
+
   @DeleteDateColumn({ nullable: true, name: 'deleted_at', type: 'timestamptz' })
   deletedAt: Date;
 }

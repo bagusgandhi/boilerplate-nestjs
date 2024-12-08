@@ -25,6 +25,9 @@ export class Maintenance extends BaseEntity {
   @Column({ nullable: true })
   program: string;
 
+  @Column({type: 'varchar', nullable: true })
+  wo_number: string;
+
   @Column({ default: false })
   is_maintenance: boolean;
 }

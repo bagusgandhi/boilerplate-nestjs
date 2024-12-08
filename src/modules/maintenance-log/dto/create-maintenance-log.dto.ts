@@ -105,4 +105,13 @@ export class CreateMaintenanceLogDto {
   @IsString()
   @IsOptional()
   program?: string;
+
+  @ApiProperty({
+    example: 'W37780',
+    description: 'Work Order Number',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  wo_number?: string;
 }
