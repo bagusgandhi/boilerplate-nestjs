@@ -141,8 +141,8 @@ export class MaintenanceSummaryService {
               SELECT
                   month_year,
                   detail->>'bogie_type' AS bogie_type,
-                  ROUND(AVG((detail->>'avg_diameter')::DOUBLE PRECISION), 2) AS avg_diameter,
-                  ROUND(AVG((detail->>'avg_flens')::DOUBLE PRECISION), 2) AS avg_flens,
+                  AVG((detail->>'avg_diameter')::DOUBLE PRECISION) AS avg_diameter,
+                  AVG((detail->>'avg_flens')::DOUBLE PRECISION) AS avg_flens,
                   SUM(total_count) AS total_count
               FROM
                   expanded_data
