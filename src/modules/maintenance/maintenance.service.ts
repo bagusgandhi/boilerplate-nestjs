@@ -227,7 +227,7 @@ export class MaintenanceService {
     return queryRunner.manager.save(Maintenance, newMaintenance);
   }
 
-  async upsert(body: CreateUpdateMaintenanceDto, user?: IUserRequest) {
+  async upsert(body: CreateUpdateMaintenanceDto, user: IUserRequest) {
     let assetData: Asset | undefined = undefined;
       // flowData: Flow | undefined = undefined;
     const queryRunner =

@@ -137,13 +137,6 @@ export class AssetService {
         throw new HttpException('Asset data not found', 404);
       }
 
-      if (query.flow && data.asset_type === AssetType.GERBONG) {
-        await this.maintenanceService.upsert({
-          asset_id: data.id,
-          flow: query.flow,
-        });
-      }
-
       return this.buildAssetTree(data);
       // return data;
     } catch (error) {
@@ -395,7 +388,7 @@ export class AssetService {
           asset_id: gerbong?.id, // case
           flow: body.flow,
           program: body.program,
-        });
+        }, user);
       }
 
       if (body.status === 'not_feasible') {
@@ -415,7 +408,7 @@ export class AssetService {
           asset_id: gerbong?.id, // case
           flow: body.flow,
           program: body.program,
-        });
+        }, user);
       }
 
       const result = await queryRunner.manager.save(Asset, existingAsset);
@@ -473,7 +466,7 @@ export class AssetService {
       await this.maintenanceService.upsert({
         asset_id: assetData.parent_asset?.id, // case
         flow: body.flow,
-      });
+      }, user);
 
       // insert maintenance log
       const logPayload = {
