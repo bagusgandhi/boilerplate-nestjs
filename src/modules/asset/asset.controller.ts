@@ -52,8 +52,8 @@ export class AssetController {
   @ApiBearerAuth()
   @Permissions('assetManagement.viewAllAsset')
   @Get('name/:name')
-  async getByName(@Param() params: NameParamDto, @Query() query: { flow?: string }) {
-    return this.assetService.getByName(params.name as string, query);
+  async getByName(@Param() params: NameParamDto) {
+    return this.assetService.getByName(params.name as string);
   }
 
   @ApiOperation({
@@ -101,7 +101,7 @@ export class AssetController {
   @ApiBearerAuth()
   @Permissions('assetManagement.deleteAsset')
   @Delete(':id')
-  async delete(@Param('id') id: string) {
-    return this.assetService.delete(id);
+  async delete(@Param('id') id: string, @GetUser() user: IUserRequest) {
+    return this.assetService.delete(id, user);
   }
 }
