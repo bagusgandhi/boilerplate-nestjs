@@ -3,6 +3,7 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PaginationDto } from 'src/global/dto/pagination.dto';
 import { FilterMaintenanceSummaryMonthlyAvgDto } from './dto/filter-maintenance-summary-monthly-avg.dto';
 import { MaintenanceSummaryService } from './maintenance-summary.service';
+import { FilterMaintenanceSummaryKepingRodaAvgDto } from './dto/filter-maintenance-summary-keping-roda-avg.dto';
 @ApiTags('Maintenance Summary')
 @Controller('maintenance-summary')
 export class MaintenanceSummaryController {
@@ -41,7 +42,7 @@ export class MaintenanceSummaryController {
   })
   @ApiBearerAuth()
   @Get('wheel')
-  async getKepingRoda(@Query() query: PaginationDto) {
+  async getKepingRoda(@Query() query: FilterMaintenanceSummaryKepingRodaAvgDto) {
     return this.maintenanaceSummaryService.getAllMonthlyKepingRodaAvg(query);
   }
 }

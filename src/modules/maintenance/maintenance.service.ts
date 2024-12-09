@@ -140,6 +140,7 @@ export class MaintenanceService {
         (existingMaintenance.is_maintenance = false);
       body.flow === null && (existingMaintenance.flow = null);
       body.wo_number && (existingMaintenance.wo_number = body.wo_number);
+      body.program && (existingMaintenance.program = body.program);
 
       logPayload.wo_number = body.wo_number;
       logPayload.asset_id = assetData.id;
@@ -245,6 +246,8 @@ export class MaintenanceService {
 
     flowData && (newMaintenance.is_maintenance = true);
     body.wo_number && (newMaintenance.wo_number = body.wo_number);
+    body.program && (newMaintenance.program = body.program);
+
 
     logPayload.wo_number = body.wo_number;
     logPayload.asset_id = assetData.id;
