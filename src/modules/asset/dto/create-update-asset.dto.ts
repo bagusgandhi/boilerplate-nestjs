@@ -103,7 +103,7 @@ export class CreateUpdateAssetDto {
   parent_asset_id?: string | null; // This will hold the ID of the parent asset
 
   @ApiProperty({
-    example: { "diameter": 800, "flank": 10 },
+    example: { "diameter": 800, "flens": 50 },
     description: 'The params value maintenance',
   })
   @IsObject()
