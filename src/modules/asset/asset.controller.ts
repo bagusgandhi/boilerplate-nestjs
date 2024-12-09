@@ -52,8 +52,8 @@ export class AssetController {
   @ApiBearerAuth()
   @Permissions('assetManagement.viewAllAsset')
   @Get('name/:name')
-  async getByName(@Param() params: NameParamDto) {
-    return this.assetService.getByName(params.name as string);
+  async getByName(@Param() params: NameParamDto, @Query() query: any) {
+    return this.assetService.getByName(params.name as string, query);
   }
 
   @ApiOperation({
