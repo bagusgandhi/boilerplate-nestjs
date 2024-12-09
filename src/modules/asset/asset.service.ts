@@ -373,6 +373,10 @@ export class AssetService {
         }
       }
 
+      if (body.parent_asset_id === null) {
+        existingAsset.parent_asset = null;
+      }
+
       logPayload.asset_type = existingAsset.asset_type;
 
       if (
@@ -644,6 +648,10 @@ export class AssetService {
           is_maintenance:false
         })
       }
+
+      // existingAsset.parent_asset = null;
+      // existingAsset.children = null;
+
 
       await queryRunner.manager.softDelete(Asset, { id });
 
