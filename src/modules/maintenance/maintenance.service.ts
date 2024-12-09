@@ -15,6 +15,7 @@ import { applyDynamicOrder } from 'src/utils/dynamic-order';
 import { User } from '../user/entities/user.entity';
 import { IUserRequest } from 'src/decorators/get-user.decorator';
 import { UserService } from '../user/user.service';
+import { CreateMaintenanceFromRoschaDto } from './dto/create-maintenance-roscha.dto';
 
 @Injectable()
 export class MaintenanceService {
@@ -26,7 +27,6 @@ export class MaintenanceService {
     private flowService: FlowService,
     private maintenanceLogService: MaintenanceLogService,
     private readonly userService: UserService,
-
   ) {}
 
   async get(id: string) {
@@ -64,7 +64,9 @@ export class MaintenanceService {
       let query = this.maintenanceRepository
         .createQueryBuilder('maintenance')
         .leftJoinAndSelect('maintenance.asset', 'asset')
-        .leftJoinAndSelect('maintenance.flow', 'flow')
+        .leftJoinAndSelect('maintenance.flow', 'flow');
+
+      // query.andWhere('maintenance.asset_id IS NOT NULL');
 
       if (!params?.viewAll) {
         query.skip((params?.page - 1) * params?.limit).take(params?.limit);
@@ -83,9 +85,14 @@ export class MaintenanceService {
         );
       }
 
-      if(params?.order){
+      if (params?.order) {
         const allowedColumns = ['created_at', 'updated_at'];
-        query = applyDynamicOrder(query, 'maintenance', params.order, allowedColumns);
+        query = applyDynamicOrder(
+          query,
+          'maintenance',
+          params.order,
+          allowedColumns,
+        );
       }
 
       const [results, total] = await query.getManyAndCount();
@@ -102,7 +109,8 @@ export class MaintenanceService {
 
   async update(body: CreateUpdateMaintenanceDto, user?: User) {
     let assetData: Asset | undefined = undefined,
-      flowData: Flow | undefined = undefined, logPayload: any = {};
+      flowData: Flow | undefined = undefined,
+      logPayload: any = {};
     const queryRunner =
       this.maintenanceRepository.manager.connection.createQueryRunner();
     await queryRunner.connect();
@@ -127,8 +135,9 @@ export class MaintenanceService {
 
       flowData && (existingMaintenance.flow = flowData);
       flowData && (existingMaintenance.is_maintenance = true);
-      
-      body.is_maintenance === false && (existingMaintenance.is_maintenance = false);
+
+      body.is_maintenance === false &&
+        (existingMaintenance.is_maintenance = false);
       body.flow === null && (existingMaintenance.flow = null);
       body.wo_number && (existingMaintenance.wo_number = body.wo_number);
 
@@ -143,7 +152,7 @@ export class MaintenanceService {
         logPayload,
         user,
       );
-      
+
       const result = await queryRunner.manager.save(
         Maintenance,
         existingMaintenance,
@@ -162,6 +171,34 @@ export class MaintenanceService {
     }
   }
 
+  async updateWithTransaction(
+    queryRunner: QueryRunner,
+    body: CreateUpdateMaintenanceDto,
+  ) {
+    let assetData: Asset | undefined = undefined;
+
+    if(body.asset_id){
+      assetData = await this.assetService.get(
+        body.asset_id,
+        AssetType.GERBONG,
+      )
+    }
+
+    const existingMaintenance = await this.maintenanceRepository
+    .createQueryBuilder('maintenance')
+    .leftJoinAndSelect('maintenance.asset', 'asset') // LEFT JOIN with Asset entity
+    .where('asset.id = :assetId', { assetId: assetData.id }) // Filter based on the asset ID
+    .getOne();
+
+    existingMaintenance.is_maintenance = body.is_maintenance;
+
+    return await queryRunner.manager.save(
+      Maintenance,
+      existingMaintenance,
+    );
+
+  }
+
   async create(body: CreateUpdateMaintenanceDto) {
     const queryRunner =
       this.maintenanceRepository.manager.connection.createQueryRunner();
@@ -170,8 +207,6 @@ export class MaintenanceService {
 
     try {
       const result = await this.createWithTransaction(queryRunner, body);
-      
-
 
       // insert action log
       // await this.actionLogRepository.insertData(queryRunner.manager, someData);
@@ -189,11 +224,11 @@ export class MaintenanceService {
   async createWithTransaction(
     queryRunner: QueryRunner,
     body: CreateUpdateMaintenanceDto,
-    user?: User
+    user?: User,
   ) {
     let assetData: Asset | undefined = undefined,
-    logPayload: any = {},
-    flowData: Flow | undefined = undefined;
+      logPayload: any = {},
+      flowData: Flow | undefined = undefined;
 
     body.asset_id &&
       (assetData = await this.assetService.getWithEntityManager(
@@ -229,7 +264,7 @@ export class MaintenanceService {
 
   async upsert(body: CreateUpdateMaintenanceDto, user: IUserRequest) {
     let assetData: Asset | undefined = undefined;
-      // flowData: Flow | undefined = undefined;
+    // flowData: Flow | undefined = undefined;
     const queryRunner =
       this.maintenanceRepository.manager.connection.createQueryRunner();
     await queryRunner.connect();
@@ -254,13 +289,44 @@ export class MaintenanceService {
       let maintenanceData = await this.getByAssetId(assetData.id);
 
       if (!maintenanceData) {
-        maintenanceData = await this.createWithTransaction(queryRunner, body, userData);
+        maintenanceData = await this.createWithTransaction(
+          queryRunner,
+          body,
+          userData,
+        );
       } else {
         maintenanceData = await this.update(body);
       }
 
       await queryRunner.commitTransaction();
       return maintenanceData;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw new Error(
+        'Error creating or updating maintenance data: ' + error.message,
+      );
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async createMaintenanceFromRoscha(body: CreateMaintenanceFromRoschaDto) {
+    let assetData: Asset | undefined = undefined;
+    const queryRunner =
+      this.maintenanceRepository.manager.connection.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // get data
+      body.gerbong &&
+        (assetData = await this.assetService.getByName(body.gerbong, {
+          asset_type: AssetType.GERBONG,
+        }));
+
+      // inset maintenance log
+
+      // return data;
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw new Error(
