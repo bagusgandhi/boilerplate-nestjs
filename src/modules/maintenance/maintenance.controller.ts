@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { MaintenanceService } from './maintenance.service';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateUpdateMaintenanceDto } from './dto/create-maintenance.dto';
@@ -20,6 +20,15 @@ export class MaintenanceController {
   @Patch()
   async upsert(@Body() body: CreateUpdateMaintenanceDto, @GetUser() user: IUserRequest) {
     return this.maintenanceService.upsert(body, user);
+  }
+
+  @ApiOperation({
+    summary: 'Upsert maintenance.',
+  })
+  // @ApiBearerAuth()
+  @Post('/roscha')
+  async createFromRoscha(@Body() body: CreateUpdateMaintenanceDto) {
+    // return this.maintenanceService.upsert(body, user);
   }
 
   // @ApiOperation({
