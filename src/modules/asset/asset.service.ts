@@ -29,6 +29,7 @@ import { FilterAliasDto } from './dto/filter-alias.dto';
 import { v4 as uuidv4 } from 'uuid';
 import { applyDynamicOrder } from 'src/utils/dynamic-order';
 import { CreateUpdateMaintenanceDto } from '../maintenance/dto/create-maintenance.dto';
+import { UpdateRoschaAssetDto } from './dto/update-roscha.dto';
 // import { MaintenanceService } from '../maintenance/maintenance.service';
 // import { FlowService } from '../flow/flow.service';
 
@@ -291,7 +292,7 @@ export class AssetService {
 
     try {
       const userData: User = await this.userService.findUserById(
-        user.id as any,
+        user?.id as any,
       );
 
       const existingAsset = await this.assetRepository.findOne({
@@ -693,6 +694,69 @@ export class AssetService {
       throw new Error(
         'Error while finding Gerbong by Bogie ID: ' + error.message,
       );
+    }
+  }
+
+  // update asset from roscha
+  async externalRoschaUpdate(body: UpdateRoschaAssetDto) {
+    const queryRunner =
+      this.assetRepository.manager.connection.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    const logPayload: CreateMaintenanceLogDto = {};
+
+    try {
+
+      const existingAsset = await this.assetRepository.findOne({
+        where: { name: body.name, asset_type: AssetType.KEPING_RODA },
+        relations: [
+          'parent_asset',
+          'children',
+        ],
+      });
+
+      if (!existingAsset) {
+        throw new HttpException('Asset data not found', 404);
+      }
+
+      logPayload.asset_type = existingAsset.asset_type;
+
+      if (
+        body.hasOwnProperty('paramsValue') &&
+        existingAsset.asset_type === AssetType.KEPING_RODA
+      ) {
+        existingAsset.paramsValue = {
+          ...existingAsset.paramsValue,
+          ...body.paramsValue,
+        };
+
+        logPayload.paramsValue = existingAsset.paramsValue;
+        logPayload.asset_id = existingAsset.id;
+        logPayload.parent_asset_id = existingAsset.parent_asset?.id;
+        logPayload.details = { info: "roscha" };
+
+        const gerbong = await this.findGerbongByBogie(existingAsset.id);
+        logPayload.gerbong_asset_id = gerbong?.id;
+        logPayload.program = body.program;
+        logPayload.wo_number = body.wo_number;
+      }
+
+      const result = await queryRunner.manager.save(Asset, existingAsset);
+
+      // insert maintenance log
+      await this.maintenanceLogService.createWithTransaction(
+        queryRunner,
+        logPayload,
+      );
+
+      await queryRunner.commitTransaction();
+      return result;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw new Error('Error updating asset: ' + error.message);
+    } finally {
+      await queryRunner.release();
     }
   }
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { MaintenanceService } from './maintenance.service';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateUpdateMaintenanceDto } from './dto/create-maintenance.dto';
@@ -7,11 +7,18 @@ import { PaginationDto } from 'src/global/dto/pagination.dto';
 import { UuidParamDto } from 'src/global/dto/params-id.dto';
 import { FilterListMaintenanceDto } from './dto/filter-list-maintenance.dto';
 import { GetUser, IUserRequest } from 'src/decorators/get-user.decorator';
+import { ApiKeyGuard } from '../auth/guard/api-key.guard';
+import { AssetService } from '../asset/asset.service';
+import { UpdateRoschaAssetDto } from '../asset/dto/update-roscha.dto';
+import { Public } from 'src/decorators/public.decorator';
 
 @ApiTags('Maintenance')
 @Controller('maintenance')
 export class MaintenanceController {
-  constructor(private readonly maintenanceService: MaintenanceService) {}
+  constructor(
+    private readonly maintenanceService: MaintenanceService,
+    private readonly assetService: AssetService,
+  ) {}
 
   @ApiOperation({
     summary: 'Upsert maintenance.',
@@ -25,10 +32,11 @@ export class MaintenanceController {
   @ApiOperation({
     summary: 'Upsert maintenance.',
   })
-  // @ApiBearerAuth()
+  // @Public()
+  @UseGuards(ApiKeyGuard)
   @Post('/roscha')
-  async createFromRoscha(@Body() body: CreateUpdateMaintenanceDto) {
-    // return this.maintenanceService.upsert(body, user);
+  async createFromRoscha(@Body() body: UpdateRoschaAssetDto) {
+    return this.assetService.externalRoschaUpdate(body);
   }
 
   // @ApiOperation({

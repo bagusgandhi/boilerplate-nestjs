@@ -73,7 +73,7 @@ export class MaintenanceLogService {
   async createWithTransaction(
     queryRunner: QueryRunner,
     body: CreateMaintenanceLogDto,
-    user: User
+    user?: User
   ) {
     let assetData: Asset | undefined = undefined, 
       parentAssetData: Asset | undefined = undefined,
@@ -105,7 +105,7 @@ export class MaintenanceLogService {
     newMaintenanceLog.paramsValue = body.paramsValue;
     newMaintenanceLog.details = body.details;
     newMaintenanceLog.asset_type = body.asset_type;
-    newMaintenanceLog.user = user;
+    user && (newMaintenanceLog.user = user);
     newMaintenanceLog.gerbong_asset = gerbongAssetData;
 
     // Save the maintenance record using the provided transaction.
