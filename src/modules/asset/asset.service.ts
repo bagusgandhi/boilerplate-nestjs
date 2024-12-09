@@ -8,7 +8,14 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Asset } from './entities/asset.entity';
-import { EntityManager, Repository } from 'typeorm';
+import {
+  Brackets,
+  EntityManager,
+  FindOptionsWhere,
+  Like,
+  QueryRunner,
+  Repository,
+} from 'typeorm';
 import { PaginationDto } from 'src/global/dto/pagination.dto';
 import { AssetType, CreateUpdateAssetDto } from './dto/create-update-asset.dto';
 import { MaintenanceService } from '../maintenance/maintenance.service';
@@ -21,6 +28,7 @@ import { UserService } from '../user/user.service';
 import { FilterAliasDto } from './dto/filter-alias.dto';
 import { v4 as uuidv4 } from 'uuid';
 import { applyDynamicOrder } from 'src/utils/dynamic-order';
+import { CreateUpdateMaintenanceDto } from '../maintenance/dto/create-maintenance.dto';
 // import { MaintenanceService } from '../maintenance/maintenance.service';
 // import { FlowService } from '../flow/flow.service';
 
@@ -121,10 +129,15 @@ export class AssetService {
     }
   }
 
-  async getByName(name: string, query: any) {
+  async getByName(name: string, query?: any) {
     try {
+      const whereCondition: any = { name };
+      if (query.asset_type) {
+        whereCondition.asset_type = query.asset_type; // Include assetType if provided
+      }
+
       const data = await this.assetRepository.findOne({
-        where: { name },
+        where: whereCondition,
         relations: [
           'parent_asset',
           'children',
@@ -280,16 +293,13 @@ export class AssetService {
       const userData: User = await this.userService.findUserById(
         user.id as any,
       );
-      
+
       const existingAsset = await this.assetRepository.findOne({
         where: { id },
-        relations: [
-          'parent_asset',
-          'children'
-        ],
+        relations: ['parent_asset', 'children'],
       });
 
-      console.log("existingAsset", existingAsset)
+      console.log('existingAsset', existingAsset);
 
       if (!existingAsset) {
         throw new HttpException('Asset data not found', 404);
@@ -384,11 +394,14 @@ export class AssetService {
         logPayload.program = body.program;
 
         // upsert maintenance flow to 'pengukuran'
-        await this.maintenanceService.upsert({
-          asset_id: gerbong?.id, // case
-          flow: body.flow,
-          program: body.program,
-        }, user);
+        await this.maintenanceService.upsert(
+          {
+            asset_id: gerbong?.id, // case
+            flow: body.flow,
+            program: body.program,
+          },
+          user,
+        );
       }
 
       if (body.status === 'not_feasible') {
@@ -404,11 +417,14 @@ export class AssetService {
 
         const gerbong = await this.findGerbongByBogie(existingAsset.id);
 
-        await this.maintenanceService.upsert({
-          asset_id: gerbong?.id, // case
-          flow: body.flow,
-          program: body.program,
-        }, user);
+        await this.maintenanceService.upsert(
+          {
+            asset_id: gerbong?.id, // case
+            flow: body.flow,
+            program: body.program,
+          },
+          user,
+        );
       }
 
       const result = await queryRunner.manager.save(Asset, existingAsset);
@@ -429,6 +445,18 @@ export class AssetService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  async updateFromRoscha(
+    queryRunner: QueryRunner,
+    name: string,
+    body: { paramsValue: any },
+  ) {
+    const updatedAsset = await this.getByName(name);
+    updatedAsset.paramsValue = body.paramsValue;
+    updatedAsset.status = 'active';
+
+    return queryRunner.manager.save(Asset, updatedAsset);
   }
 
   async swapAsset(body: SwapAssetDto, user?: IUserRequest) {
@@ -463,10 +491,13 @@ export class AssetService {
 
       const assetData = await this.get(parent_asset_id);
 
-      await this.maintenanceService.upsert({
-        asset_id: assetData.parent_asset?.id, // case
-        flow: body.flow,
-      }, user);
+      await this.maintenanceService.upsert(
+        {
+          asset_id: assetData.parent_asset?.id, // case
+          flow: body.flow,
+        },
+        user,
+      );
 
       // insert maintenance log
       const logPayload = {
@@ -504,16 +535,33 @@ export class AssetService {
       let query = this.assetRepository
         .createQueryBuilder('asset')
         .leftJoinAndSelect('asset.maintenance', 'maintenance');
-      // .orderBy(params.order)
+
+      if(params?.with_children){
+        query = query
+        .leftJoinAndSelect('asset.children', 'children')
+        .leftJoinAndSelect('children.children', 'grandchildren')
+        .leftJoinAndSelect('grandchildren.children', 'greatgrandchildren');
+      }
 
       if (!params?.viewAll) {
         query.skip((params?.page - 1) * params?.limit).take(params?.limit);
       }
 
       if (params?.search) {
-        query.andWhere('asset.name LIKE :search', {
-          search: `%${params?.search}%`,
-        });
+        if(params?.with_children){
+          query.andWhere(
+            new Brackets((qb) => {
+              qb.where('asset.name LIKE :search', { search: `%${params?.search}%` })
+                .orWhere('children.name LIKE :search', { search: `%${params?.search}%` })
+                .orWhere('grandchildren.name LIKE :search', { search: `%${params?.search}%` })
+                .orWhere('greatgrandchildren.name LIKE :search', { search: `%${params?.search}%` });
+            })
+          );
+        } else {
+          query.andWhere('asset.name LIKE :search', {
+            search: `%${params?.search}%`,
+          });
+        }
       }
 
       if (params?.asset_type) {
@@ -563,14 +611,18 @@ export class AssetService {
     }
   }
 
-  async delete(id: string) {
+  async delete(id: string, user: IUserRequest) {
     const queryRunner =
       this.assetRepository.manager.connection.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
-      const existingAsset = await this.assetRepository.findOneBy({ id });
+      const existingAsset = await this.assetRepository.findOne({
+        where: { id },
+        relations: ['maintenance'],
+      });
+      const userData = await this.userService.findUserById(user.id as any);
 
       if (!existingAsset) {
         throw new HttpException('Asset data not found', 404);
@@ -582,6 +634,16 @@ export class AssetService {
         { id },
         { name: randomName, rfid: null },
       );
+
+      if(existingAsset.asset_type === AssetType.GERBONG){
+        existingAsset.maintenance = null;
+        await queryRunner.manager.save(existingAsset);
+
+        await this.maintenanceService.updateWithTransaction(queryRunner, {
+          asset_id: existingAsset.id,
+          is_maintenance:false
+        })
+      }
 
       await queryRunner.manager.softDelete(Asset, { id });
 
