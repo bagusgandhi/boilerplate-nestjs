@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { MaintenanceSummaryMonthlyAvg } from './entities/mv_maintenance_log_monthly_avg.entity';
@@ -6,14 +6,18 @@ import { MaintenanceSummaryMonthlyKepingRodaAvg } from './entities/mv_maintenanc
 import { FilterMaintenanceSummaryMonthlyAvgDto } from './dto/filter-maintenance-summary-monthly-avg.dto';
 import { applyDynamicOrder } from 'src/utils/dynamic-order';
 import { FilterMaintenanceSummaryKepingRodaAvgDto } from './dto/filter-maintenance-summary-keping-roda-avg.dto';
+import { DataSource } from 'typeorm';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class MaintenanceSummaryService {
+  private readonly logger = new Logger(MaintenanceSummaryService.name);
   constructor(
     @InjectRepository(MaintenanceSummaryMonthlyAvg)
     private maintenanceSummaryMonthlyAvgRepository: Repository<MaintenanceSummaryMonthlyAvg>,
     @InjectRepository(MaintenanceSummaryMonthlyKepingRodaAvg)
     private maintenanceSummaryMonthlyKepingRodaAvgRepository: Repository<MaintenanceSummaryMonthlyKepingRodaAvg>,
+    private readonly dataSource: DataSource
   ) {}
 
   async getAllMonthlyAvg(params: FilterMaintenanceSummaryMonthlyAvgDto) {
@@ -303,5 +307,30 @@ export class MaintenanceSummaryService {
     } catch (error) {
       throw new Error('Error Get maintenance data: ' + error.message);
     }
+  }
+
+  async refreshMaterializedView(viewName: string) {
+    const query = `REFRESH MATERIALIZED VIEW ${viewName}`;
+    try {
+      await this.dataSource.query(query);
+      this.logger.log(`Materialized view ${viewName} refreshed successfully.`);
+    } catch (error) {
+      this.logger.error(
+        `Error refreshing materialized view ${viewName}: ${error.message}`,
+      );
+      throw error;
+    }
+  }
+
+  @Cron(CronExpression.EVERY_HOUR) // Change this to the desired interval
+  async handleCron() {
+    this.logger.log('Scheduled task to refresh materialized views started.');
+    
+    // mv_maintenance_log_monthly_keping_roda_avg 
+    await this.refreshMaterializedView('mv_maintenance_log_monthly_keping_roda_avg');
+
+    // mv_maintenance_log_monthly_avg
+    await this.refreshMaterializedView('mv_maintenance_log_monthly_avg ');
+
   }
 }

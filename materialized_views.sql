@@ -1,4 +1,4 @@
---MATERIALIZED VIEWS MAINTENANCE LOG
+-- MATERIALIZED VIEWS MAINTENANCE LOG
 
 DROP MATERIALIZED VIEW IF EXISTS mv_maintenance_log_monthly_keping_roda_avg;
 CREATE MATERIALIZED VIEW mv_maintenance_log_monthly_keping_roda_avg AS
@@ -16,13 +16,13 @@ select
             'diameter',
 	(ml."paramsValue"->>'diameter')::DOUBLE precision,
 	'flank',
-	(ml."paramsValue"->>'fence')::DOUBLE precision,
+	(ml."paramsValue"->>'flens')::DOUBLE precision,
 	'created_at',
 	ml."created_at"
         )
     ) as details,
 	AVG((ml."paramsValue"->>'diameter')::DOUBLE precision) as avg_diameter,
-	AVG((ml."paramsValue"->>'fence')::DOUBLE precision) as avg_flank,
+	AVG((ml."paramsValue"->>'flens')::DOUBLE precision) as avg_flank,
 	ml.program as program,
 	COUNT(*) AS total_records
 from
@@ -67,7 +67,7 @@ WITH bogie_avg AS (
         b.name AS bogie,
         b."bogie" AS bogie_type,
         AVG((ml."paramsValue"->>'diameter')::DOUBLE PRECISION) AS avg_diameter, -- Average diameter
-        AVG((ml."paramsValue"->>'fence')::DOUBLE PRECISION) AS avg_flens,       -- Average flank
+        AVG((ml."paramsValue"->>'flens')::DOUBLE PRECISION) AS avg_flens,       -- Average flank
         COUNT(*) AS total_records,
         ml.program as program -- Count total rows
     FROM 
@@ -108,8 +108,8 @@ GROUP BY
     month_year, gerbong, train_set, program;
    
    
---DROP MATERIALIZED VIEW IF EXISTS mv_maintenance_log_bogie_avg;
---CREATE MATERIALIZED VIEW mv_maintenance_log_bogie_avg AS
+DROP MATERIALIZED VIEW IF EXISTS mv_maintenance_log_bogie_avg;
+CREATE MATERIALIZED VIEW mv_maintenance_log_bogie_avg AS
 WITH 
     expanded_data AS (
         SELECT

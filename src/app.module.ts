@@ -14,6 +14,7 @@ import { MaintenanceLogModule } from './modules/maintenance-log/maintenance-log.
 import { MaintenanceModule } from './modules/maintenance/maintenance.module';
 import { HistoryActionLogModule } from './modules/history-action-log/history-action-log.module';
 import { MaintenanceSummaryModule } from './modules/maintenance-summary/maintenance-summary.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -27,7 +28,8 @@ import { MaintenanceSummaryModule } from './modules/maintenance-summary/maintena
     MaintenanceModule,
     MaintenanceLogModule,
     HistoryActionLogModule,
-    MaintenanceSummaryModule
+    MaintenanceSummaryModule,
+    ScheduleModule.forRoot()
   ],
   controllers: [],
   providers: [
