@@ -67,4 +67,13 @@ export class FilterAliasDto extends PaginationDto {
   @IsOptional()
   is_maintenance?: boolean;
 
+  @ApiProperty({
+    description: 'with children?',
+    required: false,
+  })
+  @Transform(({ value }) => (value === undefined || value === null ? undefined : value === 'true' || value === true))
+  @IsBoolean()
+  @IsOptional()
+  with_children?: boolean;
+
 }
