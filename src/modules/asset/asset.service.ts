@@ -175,6 +175,7 @@ export class AssetService {
       newAsset.asset_type = body.asset_type;
       newAsset.carriage_type = body.carriage_type;
       newAsset.factory = body.factory;
+      newAsset.status = body.status;
 
       switch (body.asset_type) {
         case AssetType.TRAIN_SET:
@@ -276,7 +277,7 @@ export class AssetService {
       return result;
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      throw new Error('Error creating flow: ' + error.message);
+      throw new Error('Error creating asset: ' + error.message);
     } finally {
       await queryRunner.release();
     }
