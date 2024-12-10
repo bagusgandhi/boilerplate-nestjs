@@ -21,10 +21,10 @@ export class MaintenanceSummaryController {
   }
 
   @ApiOperation({
-    summary: 'Get all Maintenance summary data.',
+    summary: 'Export Maintenance summary data.',
   })
   @ApiBearerAuth()
-  @Post('export')
+  @Get('export')
   async exportData(
     @Query() query: FilterMaintenanceSummaryMonthlyAvgDto,
     @Res() res: Response,
