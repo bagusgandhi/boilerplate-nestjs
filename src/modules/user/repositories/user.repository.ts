@@ -32,7 +32,7 @@ export class UserRepository extends Repository<User> {
         throw error; // Re-throw the specific NotFoundException
       } else {
         // Handle general query errors
-        throw new InternalServerErrorException('Error fetching role by ID');
+        throw new InternalServerErrorException('Error fetching user by ID');
       }
     }
   }
