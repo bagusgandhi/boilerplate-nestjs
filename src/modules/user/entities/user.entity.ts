@@ -6,11 +6,13 @@ import {
   Entity,
   JoinTable,
   ManyToMany,
+  OneToMany,
   PrimaryGeneratedColumn,
   Unique,
   UpdateDateColumn,
 } from 'typeorm';
 import { Role } from 'src/modules/role/entities/role.entity';
+import { Uploads } from 'src/modules/uploads/entities/uploads.entity';
 
 @Entity('user')
 @Unique(['email'])
@@ -42,4 +44,7 @@ export class User extends BaseEntity {
   @ManyToMany(() => Role, (role) => role.users)
   @JoinTable()
   roles: Role[];
+
+  @OneToMany(() => Uploads, (upload) => upload.user, { cascade: true })
+  uploads: Uploads[];
 }
