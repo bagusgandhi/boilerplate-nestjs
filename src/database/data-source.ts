@@ -11,10 +11,14 @@ const options: DataSourceOptions & SeederOptions = {
   password: DB_PASSWORD,
   database: DB_NAME,
   entities: ['dist/**/*.entity{.ts,.js}'],
-  synchronize: true,
+  // entities: ['src/**/*.entity{.ts,.js}'],
+  // synchronize: true, // dont uncomment it in production
+  synchronize: false,
   dropSchema: false,
   logging: true,
   seeds: ['dist/database/seeds/**/*.js'],
+  migrations: ['dist/database/migrations/schema-update/**/*.ts'],
+  migrationsTableName: 'migration_table',
 };
 
 export const dataSource = new DataSource(options);
