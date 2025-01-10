@@ -38,6 +38,17 @@ export class MaintenanceLogService {
     }
   }
 
+  async getLogByIds(ids: string[]) {
+    return this.maintenanceLogRepository.createQueryBuilder('maintenance_log')
+    .leftJoin(Asset, 'a', 'maintenance_log."assetId" = a."id"')
+    .select(['maintenance_log."paramsValue"', 'maintenance_log."created_at"', 'a."name"'])
+    .where('maintenance_log."assetId" IN (:...ids)', { ids })
+    .andWhere('maintenance_log."created_at"::date = CURRENT_DATE')
+    .andWhere('maintenance_log."paramsValue" IS NOT NULL')
+    .orderBy('maintenance_log."created_at"', 'DESC')
+    .getRawMany();
+  }
+
   async getAll(params: PaginationDto) {
     try {
       const query = this.maintenanceLogRepository
