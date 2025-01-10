@@ -5,6 +5,7 @@ import {
   IsObject,
   IsEnum,
   IsUUID,
+  IsNumber,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -53,6 +54,14 @@ export class CreateUpdateAssetDto {
   @IsString()
   @IsOptional()
   rfid?: string;
+
+  @ApiProperty({
+    example: 'GB10101010',
+    description: 'Alias Asset',
+  })
+  @IsString()
+  @IsOptional()
+  alias?: string;
 
   @ApiProperty({
     example: 'Train Set',
@@ -136,4 +145,13 @@ export class CreateUpdateAssetDto {
   @IsString()
   @IsOptional()
   program?: string;
+
+  @ApiProperty({
+    example: 800,
+    description: 'Treshold Train Set',
+    required: false,
+  })
+  @IsNumber()
+  @IsOptional()
+  treshold?: number;
 }
