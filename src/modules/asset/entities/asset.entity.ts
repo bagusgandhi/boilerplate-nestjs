@@ -35,6 +35,9 @@ export class Asset extends BaseEntity {
   @Column({ nullable: true })
   description: string;
 
+  @Column({ nullable: true, type: 'float8' })
+  treshold: number;
+
   @Index()
   @Column({ unique: true, nullable: true })
   rfid: string;
