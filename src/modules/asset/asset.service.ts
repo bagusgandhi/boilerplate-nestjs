@@ -61,7 +61,8 @@ export class AssetService {
         throw new HttpException('Asset data not found', 404);
       }
 
-      return this.buildAssetTree(data);
+      // return this.buildAssetTree(data);
+      return this.buildAssetTreeWithLogs(data);
       // return data;
     } catch (error) {
       throw new Error('Error Get Asset by id: ' + error.message);
@@ -102,10 +103,54 @@ export class AssetService {
       children.map((child) => this.buildAssetTree(child)),
     );
 
-    // console.log('children', children);
+    console.log({ ...asset, children: childrenWithNested });
 
     return { ...asset, children: childrenWithNested };
   }
+
+  private async buildAssetTreeWithLogs(asset: Asset): Promise<any> {
+    // List to collect IDs of assets with type "Keping Roda"
+    const listKepingRoda: string[] = [];
+  
+    // Helper function to recursively build the asset tree
+    const buildTree = async (currentAsset: Asset): Promise<any> => {
+      // If the asset type is "Keping Roda", add its ID to the list
+      if (currentAsset.asset_type === 'Keping Roda') {
+        listKepingRoda.push(currentAsset.id);
+      }
+  
+      // Load children of the current asset
+      const children = await this.assetRepository.find({
+        where: { parent_asset: { id: currentAsset.id } },
+        relations: [
+          'parent_asset',
+          'children',
+          'maintenance',
+          'maintenance.flow',
+        ],
+      });
+  
+      // Recursively build the tree for each child
+      const childrenWithNested = await Promise.all(
+        children.map((child) => buildTree(child)),
+      );
+  
+      return { ...currentAsset, children: childrenWithNested };
+    };
+  
+    // Build the tree and populate `listKepingRoda`
+    const tree = await buildTree(asset);
+  
+    // If there are "Keping Roda" assets, fetch their maintenance logs
+    let maintenanceLogs: any[] = [];
+    if (listKepingRoda.length > 0) {
+      maintenanceLogs = await this.maintenanceLogService.getLogByIds(listKepingRoda);
+    }
+  
+    // Return the tree structure and the maintenance logs
+    return { ...tree, maintenanceLogs };
+  }
+  
 
   async getByRfid(rfid: string) {
     try {
@@ -171,6 +216,7 @@ export class AssetService {
 
       const newAsset = new Asset();
       newAsset.name = body.name;
+      newAsset.alias = body.name.replace(/\s+/g, '');
       newAsset.rfid = body.rfid;
       newAsset.asset_type = body.asset_type;
       newAsset.carriage_type = body.carriage_type;
@@ -184,6 +230,15 @@ export class AssetService {
               'For asset type "Train Set", parent asset ID must be null',
             );
           }
+
+          if(body.treshold){
+            throw new BadRequestException(
+              'Train Set need treshold, please input the treshold',
+            );
+          }
+
+          newAsset.treshold = body.treshold;
+
           break;
         case AssetType.GERBONG:
           if (body.parent_asset_id) {
@@ -288,6 +343,7 @@ export class AssetService {
       this.assetRepository.manager.connection.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
+    
     const { parent_asset_id, ...data } = body;
     const logPayload: CreateMaintenanceLogDto = {};
 
@@ -301,6 +357,7 @@ export class AssetService {
         relations: ['parent_asset', 'children'],
       });
 
+      data.alias = existingAsset.name.replace(/\s+/g, '');
       console.log('existingAsset', existingAsset);
 
       if (!existingAsset) {
@@ -641,15 +698,15 @@ export class AssetService {
         { name: randomName, rfid: null },
       );
 
-      if(existingAsset.asset_type === AssetType.GERBONG){
-        existingAsset.maintenance = null;
-        await queryRunner.manager.save(existingAsset);
+      // if(existingAsset.asset_type === AssetType.GERBONG){
+      //   existingAsset.maintenance = null;
+      //   await queryRunner.manager.save(existingAsset);
 
-        await this.maintenanceService.updateWithTransaction(queryRunner, {
-          asset_id: existingAsset.id,
-          is_maintenance:false
-        })
-      }
+      //   await this.maintenanceService.updateWithTransaction(queryRunner, {
+      //     asset_id: existingAsset.id,
+      //     is_maintenance:false
+      //   })
+      // }
 
       // existingAsset.parent_asset = null;
       // existingAsset.children = null;
