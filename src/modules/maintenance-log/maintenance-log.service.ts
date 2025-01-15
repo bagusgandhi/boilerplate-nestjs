@@ -9,16 +9,18 @@ import { Asset } from '../asset/entities/asset.entity';
 import { Flow } from '../flow/entities/flow.entity';
 import { User } from '../user/entities/user.entity';
 import { PaginationDto } from 'src/global/dto/pagination.dto';
+import { IUserRequest } from 'src/decorators/get-user.decorator';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class MaintenanceLogService {
-
   constructor(
     @InjectRepository(MaintenanceLog)
     private maintenanceLogRepository: Repository<MaintenanceLog>,
     @Inject(forwardRef(() => AssetService))
     private readonly assetService: AssetService,
     private flowService: FlowService,
+    private readonly userService: UserService,
   ) {}
 
   async get(id: string) {
@@ -39,14 +41,54 @@ export class MaintenanceLogService {
   }
 
   async getLogByIds(ids: string[]) {
-    return this.maintenanceLogRepository.createQueryBuilder('maintenance_log')
-    .leftJoin(Asset, 'a', 'maintenance_log."assetId" = a."id"')
-    .select(['maintenance_log."paramsValue"', 'maintenance_log."created_at"', 'a."name"'])
-    .where('maintenance_log."assetId" IN (:...ids)', { ids })
-    .andWhere('maintenance_log."created_at"::date = CURRENT_DATE')
-    .andWhere('maintenance_log."paramsValue" IS NOT NULL')
-    .orderBy('maintenance_log."created_at"', 'DESC')
-    .getRawMany();
+    return this.maintenanceLogRepository
+      .createQueryBuilder('maintenance_log')
+      .leftJoin(Asset, 'a', 'maintenance_log."assetId" = a."id"')
+      .select([
+        'maintenance_log."paramsValue"',
+        'maintenance_log."created_at"',
+        'a."name"',
+      ])
+      .where('maintenance_log."assetId" IN (:...ids)', { ids })
+      .andWhere('maintenance_log."created_at"::date = CURRENT_DATE')
+      .andWhere('maintenance_log."paramsValue" IS NOT NULL')
+      .orderBy('maintenance_log."created_at"', 'DESC')
+      .getRawMany();
+  }
+
+  async update(id: string, body: CreateMaintenanceLogDto, user?: IUserRequest) {
+    const queryRunner =
+      this.maintenanceLogRepository.manager.connection.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const userData: User = await this.userService.findUserById(
+        user?.id as any,
+      );
+
+      const existingMaintencanceLog =
+        await this.maintenanceLogRepository.findOne({
+          where: { id },
+        });
+
+      if (!existingMaintencanceLog) {
+        throw new HttpException('Maintenance Log data not found', 404);
+      }
+
+      Object.assign(existingMaintencanceLog, body);
+      existingMaintencanceLog.user = userData;
+
+      const result = await queryRunner.manager.save(MaintenanceLog, existingMaintencanceLog);
+
+      await queryRunner.commitTransaction();
+      return result;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw new Error('Error updating maintenance log: ' + error.message);
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   async getAll(params: PaginationDto) {
@@ -62,10 +104,16 @@ export class MaintenanceLogService {
       if (params?.search) {
         query.andWhere(
           new Brackets((qb) => {
-            qb.where('asset.name LIKE :search', { search: `%${params?.search}%` })
-              .orWhere('asset.asset_type LIKE :search', { search: `%${params?.search}%` })
-              .orWhere('flow.name LIKE :search', { search: `%${params?.search}%` })
-          })
+            qb.where('asset.name LIKE :search', {
+              search: `%${params?.search}%`,
+            })
+              .orWhere('asset.asset_type LIKE :search', {
+                search: `%${params?.search}%`,
+              })
+              .orWhere('flow.name LIKE :search', {
+                search: `%${params?.search}%`,
+              });
+          }),
         );
       }
 
@@ -84,9 +132,9 @@ export class MaintenanceLogService {
   async createWithTransaction(
     queryRunner: QueryRunner,
     body: CreateMaintenanceLogDto,
-    user?: User
+    user?: User,
   ) {
-    let assetData: Asset | undefined = undefined, 
+    let assetData: Asset | undefined = undefined,
       parentAssetData: Asset | undefined = undefined,
       gerbongAssetData: Asset | undefined = undefined,
       flowData: Flow | undefined = undefined;
@@ -125,9 +173,9 @@ export class MaintenanceLogService {
 
   async createWithTransactionFromRoscha(
     queryRunner: QueryRunner,
-    body: CreateMaintenanceLogDto
+    body: CreateMaintenanceLogDto,
   ) {
-    let assetData: Asset | undefined = undefined, 
+    let assetData: Asset | undefined = undefined,
       parentAssetData: Asset | undefined = undefined,
       gerbongAssetData: Asset | undefined = undefined,
       flowData: Flow | undefined = undefined;
@@ -181,5 +229,4 @@ export class MaintenanceLogService {
       await queryRunner.release();
     }
   }
-
 }
