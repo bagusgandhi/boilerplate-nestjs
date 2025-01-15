@@ -5,12 +5,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { MaintenanceLog } from './entities/maintenance-log.entity';
 import { FlowModule } from '../flow/flow.module';
 import { AssetModule } from '../asset/asset.module';
+import { UserModule } from '../user/user.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([MaintenanceLog]),
     forwardRef(() => AssetModule),
     FlowModule,
+    UserModule
   ],
   controllers: [MaintenanceLogController],
   providers: [MaintenanceLogService],
