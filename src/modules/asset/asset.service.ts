@@ -276,7 +276,7 @@ export class AssetService {
 
             newAsset.parent_asset = parentAsset;
             newAsset.name = body.name;
-            newAsset.bogie = body.bogie;
+            // newAsset.bogie = body.bogie;
           }
           break;
         case AssetType.KEPING_RODA:
@@ -296,6 +296,7 @@ export class AssetService {
             }
             newAsset.parent_asset = parentAsset;
             newAsset.status = 'active';
+            newAsset.bogie = body.bogie;
           }
           break;
       }
