@@ -53,7 +53,7 @@ export class MaintenanceSummaryMonthlyKepingRodaAvg {
     type: 'float8',
     nullable: true
   })
-  avg_flank: number;
+  avg_flens: number;
 
   @Column({ type: 'int' })
   total_records: number;
