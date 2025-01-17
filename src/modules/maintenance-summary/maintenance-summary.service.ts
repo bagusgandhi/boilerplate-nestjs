@@ -330,6 +330,8 @@ export class MaintenanceSummaryService {
           jsonb_object_agg(bogie_type, jsonb_build_object('avg_diameter', avg_diameter, 'avg_flens', avg_flens)) AS avg
       FROM
           averages
+      WHERE
+          bogie_type IS NOT NULL -- Ensure bogie_type is not null
       GROUP BY
           month_year, total_count
       ORDER BY month_year ASC;

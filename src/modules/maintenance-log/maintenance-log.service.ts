@@ -11,6 +11,7 @@ import { User } from '../user/entities/user.entity';
 import { PaginationDto } from 'src/global/dto/pagination.dto';
 import { IUserRequest } from 'src/decorators/get-user.decorator';
 import { UserService } from '../user/user.service';
+import { CreateBulkMaintenanceLog } from './dto/create-bulk-maintenance-log.dto';
 
 @Injectable()
 export class MaintenanceLogService {
@@ -79,7 +80,10 @@ export class MaintenanceLogService {
       Object.assign(existingMaintencanceLog, body);
       existingMaintencanceLog.user = userData;
 
-      const result = await queryRunner.manager.save(MaintenanceLog, existingMaintencanceLog);
+      const result = await queryRunner.manager.save(
+        MaintenanceLog,
+        existingMaintencanceLog,
+      );
 
       await queryRunner.commitTransaction();
       return result;
@@ -88,6 +92,28 @@ export class MaintenanceLogService {
       throw new Error('Error updating maintenance log: ' + error.message);
     } finally {
       await queryRunner.release();
+    }
+  }
+
+  async createBulk(body: CreateBulkMaintenanceLog, user?: User) {
+    const queryRunner =
+      this.maintenanceLogRepository.manager.connection.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const { asset_id, flow, wo_number, program, is_maintenance, paramsValue } = body
+      const userData: User = await this.userService.findUserById(
+        user?.id as any,
+      )
+
+      
+
+
+    } catch (error) {
+      throw new Error(
+        'Error create bulk maintenance-log data:' + error.message,
+      );
     }
   }
 

@@ -75,9 +75,10 @@ export class CreateUpdateAssetDto {
     example: 'GB',
     description: 'The Carriage Type',
   })
-  @IsEnum(CarriageType)
+  @IsString()
   @IsOptional()
-  carriage_type?: CarriageType;
+  carriage_type?: any;
+  // @IsEnum(CarriageType)
 
   @ApiProperty({
     example: 'GB - KKBW 50T (INKA)',

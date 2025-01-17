@@ -16,6 +16,7 @@ import { User } from '../user/entities/user.entity';
 import { IUserRequest } from 'src/decorators/get-user.decorator';
 import { UserService } from '../user/user.service';
 import { CreateMaintenanceFromRoschaDto } from './dto/create-maintenance-roscha.dto';
+import * as moment from 'moment';
 
 @Injectable()
 export class MaintenanceService {
@@ -59,6 +60,8 @@ export class MaintenanceService {
     }
   }
 
+  
+
   async getAll(params: FilterListMaintenanceDto) {
     try {
       let query = this.maintenanceRepository
@@ -84,6 +87,12 @@ export class MaintenanceService {
           { search: `%${params?.search}%` },
         );
       }
+
+      // Add filter for updated_at less than 7 days from now using moment.js
+      // const sevenDaysAgo = moment().subtract(7, 'days').toDate();
+      // query.andWhere('maintenance.updated_at > :sevenDaysAgo', {
+      //   sevenDaysAgo,
+      // });
 
       if (params?.order) {
         const allowedColumns = ['created_at', 'updated_at'];
@@ -139,8 +148,10 @@ export class MaintenanceService {
       body.is_maintenance === false &&
         (existingMaintenance.is_maintenance = false);
       body.flow === null && (existingMaintenance.flow = null);
-      body.wo_number !== undefined && (existingMaintenance.wo_number = body.wo_number);
-      body.program !== undefined && (existingMaintenance.program = body.program);
+      body.wo_number !== undefined &&
+        (existingMaintenance.wo_number = body.wo_number);
+      body.program !== undefined &&
+        (existingMaintenance.program = body.program);
 
       logPayload.wo_number = body.wo_number;
       logPayload.asset_id = assetData.id;
@@ -178,26 +189,19 @@ export class MaintenanceService {
   ) {
     let assetData: Asset | undefined = undefined;
 
-    if(body.asset_id){
-      assetData = await this.assetService.get(
-        body.asset_id,
-        AssetType.GERBONG,
-      )
+    if (body.asset_id) {
+      assetData = await this.assetService.get(body.asset_id, AssetType.GERBONG);
     }
 
     const existingMaintenance = await this.maintenanceRepository
-    .createQueryBuilder('maintenance')
-    .leftJoinAndSelect('maintenance.asset', 'asset') // LEFT JOIN with Asset entity
-    .where('asset.id = :assetId', { assetId: assetData.id }) // Filter based on the asset ID
-    .getOne();
+      .createQueryBuilder('maintenance')
+      .leftJoinAndSelect('maintenance.asset', 'asset') // LEFT JOIN with Asset entity
+      .where('asset.id = :assetId', { assetId: assetData.id }) // Filter based on the asset ID
+      .getOne();
 
     existingMaintenance.is_maintenance = body.is_maintenance;
 
-    return await queryRunner.manager.save(
-      Maintenance,
-      existingMaintenance,
-    );
-
+    return await queryRunner.manager.save(Maintenance, existingMaintenance);
   }
 
   async create(body: CreateUpdateMaintenanceDto) {
@@ -247,7 +251,6 @@ export class MaintenanceService {
     flowData && (newMaintenance.is_maintenance = true);
     body.wo_number !== undefined && (newMaintenance.wo_number = body.wo_number);
     body.program !== undefined && (newMaintenance.program = body.program);
-
 
     logPayload.wo_number = body.wo_number;
     logPayload.asset_id = assetData.id;
