@@ -30,4 +30,8 @@ export class Maintenance extends BaseEntity {
 
   @Column({ default: false })
   is_maintenance: boolean;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  om_date: Date;
+
 }
