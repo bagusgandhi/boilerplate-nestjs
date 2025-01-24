@@ -1,7 +1,7 @@
 import { HttpException, Inject, Injectable, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Maintenance } from './entities/maintenance.entity';
-import { QueryRunner, Repository } from 'typeorm';
+import { Brackets, QueryRunner, Repository } from 'typeorm';
 import { CreateUpdateMaintenanceDto } from './dto/create-maintenance.dto';
 import { FlowService } from '../flow/flow.service';
 import { AssetService } from '../asset/asset.service';
@@ -60,8 +60,6 @@ export class MaintenanceService {
     }
   }
 
-  
-
   async getAll(params: FilterListMaintenanceDto) {
     try {
       let query = this.maintenanceRepository
@@ -75,9 +73,36 @@ export class MaintenanceService {
         query.skip((params?.page - 1) * params?.limit).take(params?.limit);
       }
 
+      // if (params?.is_maintenance) {
+      //   query.andWhere('maintenance.is_maintenance = :is_maintenance', {
+      //     is_maintenance: params?.is_maintenance,
+      //   });
+      // } else {
+      //   // Add filter for updated_at less than 7 days from now using moment.js
+      //   const sevenDaysAgo = moment().subtract(7, 'days').toDate();
+      //   console.log(sevenDaysAgo)
+      //   query.andWhere('maintenance.om_date > :sevenDaysAgo', {
+      //     sevenDaysAgo,
+      //   });
+      // }
+
       if (params?.is_maintenance) {
-        query.andWhere('maintenance.is_maintenance = :is_maintenance', {
-          is_maintenance: params?.is_maintenance,
+        // Query for both conditions: is_maintenance is true OR om_date > seven days ago
+        const sevenDaysAgo = moment().subtract(7, 'days').toDate();
+        query.andWhere(
+          new Brackets((qb) => {
+            qb.where('maintenance.is_maintenance = :is_maintenance', {
+              is_maintenance: params.is_maintenance,
+            }).orWhere('maintenance.om_date > :sevenDaysAgo', {
+              sevenDaysAgo,
+            });
+          }),
+        );
+      } else {
+        // Query for om_date > seven days ago
+        const sevenDaysAgo = moment().subtract(7, 'days').toDate();
+        query.andWhere('maintenance.om_date > :sevenDaysAgo', {
+          sevenDaysAgo,
         });
       }
 
@@ -87,12 +112,6 @@ export class MaintenanceService {
           { search: `%${params?.search}%` },
         );
       }
-
-      // Add filter for updated_at less than 7 days from now using moment.js
-      // const sevenDaysAgo = moment().subtract(7, 'days').toDate();
-      // query.andWhere('maintenance.updated_at > :sevenDaysAgo', {
-      //   sevenDaysAgo,
-      // });
 
       if (params?.order) {
         const allowedColumns = ['created_at', 'updated_at'];
@@ -148,10 +167,13 @@ export class MaintenanceService {
       body.is_maintenance === false &&
         (existingMaintenance.is_maintenance = false);
       body.flow === null && (existingMaintenance.flow = null);
-      body.wo_number !== undefined &&
-        (existingMaintenance.wo_number = body.wo_number);
       body.program !== undefined &&
         (existingMaintenance.program = body.program);
+
+      if (body.wo_number !== undefined) {
+        existingMaintenance.wo_number = body.wo_number;
+        existingMaintenance.om_date = new Date();
+      }
 
       logPayload.wo_number = body.wo_number;
       logPayload.asset_id = assetData.id;
@@ -249,8 +271,12 @@ export class MaintenanceService {
     newMaintenance.flow = flowData;
 
     flowData && (newMaintenance.is_maintenance = true);
-    body.wo_number !== undefined && (newMaintenance.wo_number = body.wo_number);
     body.program !== undefined && (newMaintenance.program = body.program);
+
+    if (body.wo_number !== undefined) {
+      newMaintenance.wo_number = body.wo_number;
+      newMaintenance.om_date = new Date();
+    }
 
     logPayload.wo_number = body.wo_number;
     logPayload.asset_id = assetData.id;
