@@ -39,7 +39,7 @@ COPY package*.json ./
 ENV NODE_ENV=production
 
 # Expose the application port
-EXPOSE 3009
+EXPOSE 4000
 
 # Start the application
 CMD ["node", "dist/main.js"]
