@@ -18,7 +18,7 @@ COPY . .
 # Build the application
 RUN npm run build
 
-RUN npm prune --production
+# RUN npm prune --production
 
 # Stage 2: Production Stage
 FROM node:18.16.0-alpine3.18 AS production
@@ -36,7 +36,7 @@ COPY --from=build /usr/src/app/node_modules ./node_modules
 COPY package*.json ./
 
 # Set environment variables
-ENV NODE_ENV=production
+# ENV NODE_ENV=production
 
 # Expose the application port
 EXPOSE 4000

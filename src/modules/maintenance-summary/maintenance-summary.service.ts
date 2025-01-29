@@ -500,7 +500,7 @@ export class MaintenanceSummaryService {
     }
   }
 
-  @Cron(CronExpression.EVERY_HOUR) // Change this to the desired interval
+  // @Cron(CronExpression.EVERY_HOUR) // Change this to the desired interval
   async handleCron() {
     this.logger.log('Scheduled task to refresh materialized views started.');
 

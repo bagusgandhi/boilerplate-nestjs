@@ -46,6 +46,7 @@ export class MaintenanceLogService {
       .createQueryBuilder('maintenance_log')
       .leftJoin(Asset, 'a', 'maintenance_log."assetId" = a."id"')
       .select([
+        'maintenance_log."id"',
         'maintenance_log."paramsValue"',
         'maintenance_log."created_at"',
         'a."name"',

@@ -12,15 +12,17 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({
     transform: true,
   }));
-  app.enableCors({
-    origin: [
-      'http://localhost:3000'
-    ]
-  });
+  app.enableCors();
+
+  // app.enableCors({
+  //   origin: [
+  //     'http://localhost:3000'
+  //   ]
+  // });
 
   const config = new DocumentBuilder()
-  .setTitle('BOILERPLATE API')
-  .setDescription('The Boilerplate API')
+  .setTitle('KAI INVENTORY API')
+  .setDescription('KAI Inventory API')
   .setVersion('1.0')
   .addBearerAuth()
   .build();
