@@ -11,4 +11,7 @@ export const Env = () => ({
   PRIVATE_KEY_FILE: process.env.PRIVATE_KEY_FILE,
   PUBLIC_KEY_FILE: process.env.PUBLIC_KEY_FILE,
   SECRET_API_KEY: process.env.SECRET_API_KEY,
+  EMAIL_HOST: process.env.EMAIL_HOST,
+  EMAIL_USERNAME: process.env.EMAIL_USERNAME,
+  EMAIL_PASSWORD: process.env.EMAIL_PASSWORD,
 });
