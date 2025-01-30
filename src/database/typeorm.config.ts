@@ -17,7 +17,7 @@ const typeOrmConfig: TypeOrmModuleOptions = {
   dropSchema: false,
   logging: true,
   // migrations: ['dist/database/migrations/**/*.ts'],
-  migrations: ['dist/database/migrations/schema-update/**/*.ts'],
+  migrations: ['dist/database/migrations/schema-update/**/*.js'],
   migrationsTableName: 'migration_table',
 };
 
