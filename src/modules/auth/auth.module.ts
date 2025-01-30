@@ -6,6 +6,7 @@ import { privateKey, publicKey } from 'src/utils/keys';
 import { JwtStrategy } from './strategy/jwt.strategy';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { ApiKeyStrategy } from './strategy/apikey.strategy';
 
 @Module({
   imports: [
@@ -20,7 +21,7 @@ import { AuthService } from './auth.service';
       },
     }),
   ],
-  providers: [JwtStrategy, AuthService],
+  providers: [JwtStrategy, ApiKeyStrategy, AuthService],
   controllers: [AuthController],
 })
 export class AuthModule {}
