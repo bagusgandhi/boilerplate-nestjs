@@ -40,4 +40,8 @@ export class UpdateUserDto {
   @IsString()
   @IsOptional()
   roleId?: string;
+
+  resetToken?: string;
+
+  resetTokenExpires?: Date;
 }
