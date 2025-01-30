@@ -1,6 +1,7 @@
 import {
   ConflictException,
   HttpException,
+  HttpStatus,
   Injectable,
   Logger,
   NotFoundException,
@@ -13,6 +14,8 @@ import { PaginationDto } from '../../global/dto/pagination.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UuidParamDto } from 'src/global/dto/params-id.dto';
 import { GetUserDto } from './dto/get-user.dto';
+import { SignInApiKeyDto } from '../auth/dto/signin-apikey.dto';
+import { User } from './entities/user.entity';
 
 @Injectable()
 export class UserService {
@@ -73,6 +76,38 @@ export class UserService {
     }
   }
 
+  async createFromApiKey(signInApiKey: SignInApiKeyDto, provider: string) {
+    try {
+      const { email, name } = signInApiKey
+      const existingUser = await this.userRepository.findOneBy({
+        email,
+      });
+
+      if (existingUser) {
+        throw new HttpException(
+          {
+            message: `Email ${email} is already used. Please use another email address!`,
+          },
+          HttpStatus.BAD_REQUEST,
+        );
+      } else {
+        const defaultRole = await this.roleRepository.findByName('user');
+
+        const newUser = new User();
+        newUser.email = email;
+        newUser.name = name;
+        newUser.roles = [defaultRole], // Assign the "User" role by default
+        newUser.provider = provider;
+        newUser.isVerified = true;
+        newUser.verifiedAt = new Date();
+        return this.userRepository.save(newUser);
+      }
+    } catch (error) {
+      this.logger.error(error);
+      throw error;
+    }
+  }
+
   async update(id: UuidParamDto, updateUserDto: UpdateUserDto) {
     try {
       const user = await this.userRepository.findById(id);
@@ -82,7 +117,7 @@ export class UserService {
       }
 
       if (updateUserDto.email) {
-        const existingUser:any = await this.userRepository.findByEmail(
+        const existingUser: any = await this.userRepository.findByEmail(
           updateUserDto.email,
         );
         if (existingUser && existingUser.id !== id) {
@@ -110,6 +145,11 @@ export class UserService {
         user.roles = [role];
       }
 
+      if((updateUserDto.resetToken !== undefined ) && (updateUserDto.resetTokenExpires !== undefined )) {
+        user.resetToken = updateUserDto.resetToken;
+        user.resetTokenExpires = updateUserDto.resetTokenExpires
+      }
+
       return this.userRepository.save(user);
     } catch (error) {
       this.logger.error(error);
@@ -119,7 +159,9 @@ export class UserService {
 
   async findUserByEmail(email: string) {
     try {
-      const user = await this.userRepository.findByEmail(email);
+      const user = await this.userRepository.findOneBy({
+        email,
+      });
 
       return user;
     } catch (error) {
@@ -131,12 +173,12 @@ export class UserService {
 
   async findAll(query: any) {
     try {
-      console.log("query", query)
+      console.log('query', query);
       const users = await this.userRepository.queryPaginate(
         query.page,
         query.limit,
         query.search,
-        query.roleId
+        query.roleId,
       );
       return users;
     } catch (error) {
@@ -155,4 +197,6 @@ export class UserService {
       throw new HttpException(error.message, error.status);
     }
   }
+
+
 }
