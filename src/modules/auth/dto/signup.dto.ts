@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsEmail, MinLength, IsOptional } from 'class-validator';
+import { IsPhoneNumber, IsNotEmpty, IsString, IsEmail, MinLength, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class SignUpDto {
@@ -27,4 +27,20 @@ export class SignUpDto {
   @IsNotEmpty()
   @IsString()
   name: string;
+
+  @ApiProperty({
+    example: 'Karanggayam RT07, Bantul, Bantul, Yogyakarta',
+    description: 'The users adress',
+  })
+  @IsOptional()
+  @IsString()
+  address: string;
+
+  @ApiProperty({
+    example: '+628123456789',
+    description: 'The users phone number',
+  })
+  @IsOptional()
+  @IsPhoneNumber('ID', { message: 'Invalid phone number format' }) // 'ID' for Indonesia, change as needed
+  phone: string;
 }
