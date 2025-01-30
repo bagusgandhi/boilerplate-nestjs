@@ -9,6 +9,10 @@ import { RolesGuard } from './modules/auth/guard/role.guard';
 import { PermissionsGuard } from './modules/auth/guard/permission.guard';
 import { JwtAuthGuard } from './modules/auth/guard/jwt.guard';
 import { UploadsModule } from './modules/uploads/uploads.module';
+import { MailerModule } from '@nestjs-modules/mailer';
+import { Env } from './config/env-loader';
+
+const { EMAIL_HOST, EMAIL_USERNAME, EMAIL_PASSWORD } = Env();
 
 @Module({
   imports: [
@@ -17,7 +21,16 @@ import { UploadsModule } from './modules/uploads/uploads.module';
     UserModule,
     RoleModule,
     PermissionModule,
-    UploadsModule
+    UploadsModule,
+    MailerModule.forRoot({
+      transport: {
+        host: EMAIL_HOST,
+        auth: {
+          user: EMAIL_USERNAME,
+          pass: EMAIL_PASSWORD,
+        },
+      },
+    }),
   ],
   controllers: [],
   providers: [
