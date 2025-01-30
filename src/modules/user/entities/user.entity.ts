@@ -27,6 +27,12 @@ export class User extends BaseEntity {
   email: string;
 
   @Column({ nullable: true })
+  phone: string;
+
+  @Column({ nullable: true })
+  address: string;
+
+  @Column({ nullable: true })
   salt: string;
 
   @Column({ nullable: true })
@@ -47,4 +53,19 @@ export class User extends BaseEntity {
 
   @OneToMany(() => Uploads, (upload) => upload.user, { cascade: true })
   uploads: Uploads[];
+
+  @Column({ nullable: false, default: 'basic' })
+  provider: string;
+
+  @Column({ nullable: true })
+  resetToken: string | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  resetTokenExpires: Date | null;
+
+  @Column({ type: 'boolean', default: false })
+  isVerified: boolean;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  verifiedAt: Date | null;
 }
