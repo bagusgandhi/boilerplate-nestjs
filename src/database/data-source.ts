@@ -17,7 +17,7 @@ const options: DataSourceOptions & SeederOptions = {
   dropSchema: false,
   logging: true,
   seeds: ['dist/database/seeds/**/*.js'],
-  migrations: ['dist/database/migrations/schema-update/**/*.ts'],
+  migrations: ['dist/database/migrations/schema-update/**/*.js'],
   migrationsTableName: 'migration_table',
 };
 
