@@ -39,7 +39,6 @@ export class AuthService {
   async signIn(signInDto: SignInDto) {
     try {
       const user = await this.userService.findUserByEmail(signInDto.email);
-      const { id, name, email, roles, password, provider } = user;
 
       if (!user) {
         throw new HttpException(
@@ -47,6 +46,9 @@ export class AuthService {
           HttpStatus.UNAUTHORIZED,
         );
       }
+
+      const { id, name, email, roles, password, provider } = user;
+
 
       if (provider !== 'basic' && password === null) {
         throw new HttpException(
