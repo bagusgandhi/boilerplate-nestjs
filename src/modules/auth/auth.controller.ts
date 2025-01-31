@@ -9,6 +9,7 @@ import { SignInApiKeyDto } from './dto/signin-apikey.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { GetUser, IUserRequest } from 'src/decorators/get-user.decorator';
 import { UpdateUserDto } from '../user/dto/update-user.dto';
+import { SignUpDto } from './dto/signup.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -22,6 +23,15 @@ export class AuthController {
   @Post('/login')
   async login(@Body() signInDto: SignInDto) {
     return await this.authService.signIn(signInDto);
+  }
+
+  @ApiOperation({
+    summary: 'Register user.',
+  })
+  @Public()
+  @Post('/register')
+  async register(@Body() signUpDto: SignUpDto) {
+    return await this.authService.signUp(signUpDto);
   }
 
   @ApiOperation({
