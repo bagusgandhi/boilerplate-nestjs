@@ -41,6 +41,13 @@ export class AuthService {
       const user = await this.userService.findUserByEmail(signInDto.email);
       const { id, name, email, roles, password, provider } = user;
 
+      if (!user) {
+        throw new HttpException(
+          'Email atau password tidak sesuai!',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+
       if (provider !== 'basic' && password === null) {
         throw new HttpException(
           'Akun anda menggunakan oAuth, silahkan login melalui oAuth',
