@@ -56,6 +56,17 @@ export class UserController {
   }
 
   @ApiOperation({
+    summary: 'Update current user profile.',
+  })
+  @ApiBearerAuth()
+  @Patch('/profile')
+  async updateProfile(
+    @GetUser() user: IUserRequest, 
+    @Body() updateUserDto: UpdateUserDto) {
+    return await this.userService.update(user.id as any, updateUserDto);
+  }
+
+  @ApiOperation({
     summary: 'Get User by id.',
   })
   @ApiBearerAuth()
