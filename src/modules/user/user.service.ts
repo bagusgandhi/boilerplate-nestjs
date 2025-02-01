@@ -78,7 +78,7 @@ export class UserService {
 
   async createFromApiKey(signInApiKey: SignInApiKeyDto, provider: string) {
     try {
-      const { email, name } = signInApiKey
+      const { email, name } = signInApiKey;
       const existingUser = await this.userRepository.findOneBy({
         email,
       });
@@ -96,8 +96,8 @@ export class UserService {
         const newUser = new User();
         newUser.email = email;
         newUser.name = name;
-        newUser.roles = [defaultRole], // Assign the "User" role by default
-        newUser.provider = provider;
+        (newUser.roles = [defaultRole]), // Assign the "User" role by default
+          (newUser.provider = provider);
         newUser.isVerified = true;
         newUser.verifiedAt = new Date();
         return this.userRepository.save(newUser);
@@ -145,9 +145,20 @@ export class UserService {
         user.roles = [role];
       }
 
-      if((updateUserDto.resetToken !== undefined ) && (updateUserDto.resetTokenExpires !== undefined )) {
+      if (updateUserDto.phone) {
+        user.phone = updateUserDto.phone;
+      }
+
+      if (updateUserDto.address) {
+        user.address = updateUserDto.address;
+      }
+
+      if (
+        updateUserDto.resetToken !== undefined &&
+        updateUserDto.resetTokenExpires !== undefined
+      ) {
         user.resetToken = updateUserDto.resetToken;
-        user.resetTokenExpires = updateUserDto.resetTokenExpires
+        user.resetTokenExpires = updateUserDto.resetTokenExpires;
       }
 
       return this.userRepository.save(user);
@@ -161,7 +172,7 @@ export class UserService {
     try {
       const user = await this.userRepository.findOne({
         where: { email },
-        relations: ["roles", "roles.permissions"],
+        relations: ['roles', 'roles.permissions'],
       });
 
       return user;
@@ -198,6 +209,4 @@ export class UserService {
       throw new HttpException(error.message, error.status);
     }
   }
-
-
 }
