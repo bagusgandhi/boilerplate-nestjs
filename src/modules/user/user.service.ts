@@ -62,8 +62,7 @@ export class UserService {
       }
 
       const newUser = this.userRepository.create({
-        email: signUpDto.email,
-        name: signUpDto.name,
+        ...signUpDto,
         salt,
         password: hashedPassword,
         roles: [defaultRole], // Assign the "User" role by default
