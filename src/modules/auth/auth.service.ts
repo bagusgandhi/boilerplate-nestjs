@@ -105,7 +105,7 @@ export class AuthService {
       };
     } catch (error) {
       this.logger.error(error);
-      throw new HttpException(error.message, error.statusCode);
+      throw error;
     }
   }
 
