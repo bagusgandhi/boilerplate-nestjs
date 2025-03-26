@@ -25,7 +25,7 @@ export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly userService: UserService,
-    private readonly mailService: MailerService
+    private readonly mailService: MailerService,
   ) {}
 
   validateApiKey(apiKey: string) {
@@ -48,7 +48,6 @@ export class AuthService {
       }
 
       const { id, name, email, roles, password, provider } = user;
-
 
       if (provider !== 'basic' && password === null) {
         throw new HttpException(
@@ -171,15 +170,14 @@ export class AuthService {
         throw new NotFoundException('User not found');
       }
 
-      
       const payload: JwtPayload = { id: user.id };
-      
+
       // Generate a token (valid for 1 hour)
       const resetToken = this.jwtService.sign(payload, { expiresIn: '1h' });
-      
+
       user.resetToken = resetToken;
       user.resetTokenExpires = new Date(Date.now() + 3600 * 1000); // 1 hour from now
-      
+
       // console.info(user);
       await this.userService.update(user.id as any, user);
 
@@ -189,7 +187,7 @@ export class AuthService {
         subject: `Reset Password Boilerplate Account`,
         text: `Reset Password Boilerplate Account http://localhost:8000/api/v1/auth/reset-password/${resetToken}`,
       });
-      
+
       // // TODO: Send Email with Reset Link
       return resetToken; // For now, return token (replace with email logic)
     } catch (error) {
@@ -198,10 +196,7 @@ export class AuthService {
     }
   }
 
-  async resetPassword(
-    resetToken: string,
-    newPassword: string,
-  ): Promise<any> {
+  async resetPassword(resetToken: string, newPassword: string): Promise<any> {
     let decoded: any;
     try {
       decoded = this.jwtService.verify(resetToken);
@@ -223,7 +218,6 @@ export class AuthService {
     user.resetTokenExpires = null;
     await this.userService.update(user.id as any, user);
 
-    return { message: 'Password reset successfully'};
+    return { message: 'Password reset successfully' };
   }
-
 }
