@@ -13,6 +13,8 @@ import {
 } from 'typeorm';
 import { Role } from 'src/modules/role/entities/role.entity';
 import { Uploads } from 'src/modules/uploads/entities/uploads.entity';
+import { Orders } from 'src/modules/orders/entities/orders.entity';
+import { Invoice } from 'src/modules/invoice/entities/invoice.entity';
 
 @Entity('user')
 @Unique(['email'])
@@ -53,6 +55,12 @@ export class User extends BaseEntity {
 
   @OneToMany(() => Uploads, (upload) => upload.user, { cascade: true })
   uploads: Uploads[];
+
+  @OneToMany(() => Orders, (order) => order.user, { cascade: true })
+  orders: Orders[];
+
+  @OneToMany(() => Invoice, (invoice) => invoice.user, { cascade: true })
+  invoices: Invoice[];
 
   @Column({ nullable: false, default: 'basic' })
   provider: string;

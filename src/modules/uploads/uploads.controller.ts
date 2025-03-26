@@ -24,7 +24,6 @@ import { CreateUploadsDto } from './dto/create-uploads.dto';
 import { GetUser, IUserRequest } from 'src/decorators/get-user.decorator';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { CustomMulter } from 'src/utils/multer.options';
-import { Public } from 'src/decorators/public.decorator';
 import { UploadsFileDto } from './dto/uploads-file.dto';
 
 @ApiTags('Uploads')

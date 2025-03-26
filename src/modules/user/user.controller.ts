@@ -5,7 +5,6 @@ import {
   Get,
   Logger,
   Param,
-  ParseIntPipe,
   Patch,
   Post,
   Query,
@@ -13,7 +12,6 @@ import {
 import { UserService } from './user.service';
 import { GetUser, IUserRequest } from 'src/decorators/get-user.decorator';
 import { SignUpDto } from '../auth/dto/signup.dto';
-import { Roles } from 'src/decorators/role.decorator';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Permissions } from 'src/decorators/permission.decorator';

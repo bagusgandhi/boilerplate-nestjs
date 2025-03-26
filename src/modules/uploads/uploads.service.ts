@@ -14,7 +14,7 @@ export class UploadsService {
   constructor(
     @InjectRepository(Uploads)
     private uploadsRepository: Repository<Uploads>,
-    private readonly userService: UserService
+    private readonly userService: UserService,
   ) {}
 
   async findById(id: string) {
@@ -32,12 +32,11 @@ export class UploadsService {
     body: CreateUploadsDto,
     user: User,
   ) {
-
     const newUploads = new Uploads();
     newUploads.originalName = body.originalName;
     newUploads.path = body.path;
     newUploads.size = body.size;
-    newUploads.user = user
+    newUploads.user = user;
 
     // Save the maintenance record using the provided transaction.
     return queryRunner.manager.save(Uploads, newUploads);
