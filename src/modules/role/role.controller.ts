@@ -16,7 +16,6 @@ import { UpdateRoleDto } from './dto/update-role.dto';
 import { Permissions } from 'src/decorators/permission.decorator';
 import { UuidParamDto } from 'src/global/dto/params-id.dto';
 
-
 @ApiTags('Roles')
 @Controller('role')
 export class RoleController {
