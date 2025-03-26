@@ -9,21 +9,21 @@ const { PORT } = Env();
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.setGlobalPrefix('api/v1');
-  app.useGlobalPipes(new ValidationPipe({
-    transform: true,
-  }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+    }),
+  );
   app.enableCors({
-    origin: [
-      'http://localhost:3000'
-    ]
+    origin: ['http://localhost:3000'],
   });
 
   const config = new DocumentBuilder()
-  .setTitle('BOILERPLATE API')
-  .setDescription('The Boilerplate API')
-  .setVersion('1.0')
-  .addBearerAuth()
-  .build();
+    .setTitle('BOILERPLATE API')
+    .setDescription('The Boilerplate API')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
