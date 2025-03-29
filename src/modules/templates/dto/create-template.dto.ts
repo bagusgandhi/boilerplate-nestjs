@@ -33,6 +33,14 @@ export class CreateTemplateDto {
   url: string;
 
   @ApiProperty({
+    example: 'https://www.google.com',
+    description: 'The url of the template image',
+  })
+  @IsString()
+  @IsNotEmpty()
+  img_url: string;
+
+  @ApiProperty({
     example: ['"0ae30c55-2139-4173-b63a-cded587b5e23"'],
     description: 'The id categories data',
   })
