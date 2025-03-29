@@ -32,7 +32,9 @@ export class Orders extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Products, (product) => product.orders)
+  @ManyToOne(() => Products, (product) => product.orders, {
+    onDelete: 'SET NULL',
+  })
   product: Products;
 
   @ManyToOne(() => Domain, (domain) => domain.orders)
