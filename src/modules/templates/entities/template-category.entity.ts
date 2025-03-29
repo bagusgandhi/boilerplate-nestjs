@@ -8,7 +8,7 @@ export class TemplateCategory extends BaseEntity {
   id: string;
 
   @ManyToOne(() => Templates, (template) => template.templateCategories, {
-    onDelete: 'SET NULL',
+    onDelete: 'CASCADE',
   })
   template: Templates;
 
