@@ -84,7 +84,7 @@ export class OrdersService {
       order.description = description;
       order.user = userData;
       order.template = template;
-      order.expired_date = moment().add(product.duration, 'months').toDate();
+      order.expired_date = moment().add(product.duration, 'years').toDate();
 
       // Create order
       await this.ordersRepository.save(order);
@@ -152,7 +152,7 @@ export class OrdersService {
       // update order status
       order.status = StatusOrder.ACTIVE;
       order.expired_date = moment()
-        .add(order.product.duration, 'months')
+        .add(order.product.duration, 'years')
         .toDate();
       await this.ordersRepository.save(order);
 

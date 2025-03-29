@@ -90,7 +90,8 @@ export class Orders extends BaseEntity {
   @BeforeUpdate()
   calculateTotal() {
     const productAmount = Number(this.product?.amount) || 0;
-    const domainAmount = Number(this.domain?.amount) || 0;
+    const domainAmount =
+      Number(this.domain?.amount) * Number(this.product?.duration) || 0;
     const promoDiscount = Number(this.promo?.amount) || 0;
     this.total = domainAmount + productAmount - promoDiscount;
   }
