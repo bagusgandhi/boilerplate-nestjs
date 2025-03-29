@@ -28,6 +28,8 @@ export class Templates extends BaseEntity {
   @OneToMany(() => TemplateCategory, (tc) => tc.template, { cascade: true })
   templateCategories: TemplateCategory[];
 
-  @OneToMany(() => Orders, (order) => order.template)
+  @OneToMany(() => Orders, (order) => order.template, {
+    onDelete: 'SET NULL',
+  })
   orders: Orders[];
 }

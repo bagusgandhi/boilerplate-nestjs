@@ -7,7 +7,9 @@ export class TemplateCategory extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Templates, (template) => template.templateCategories)
+  @ManyToOne(() => Templates, (template) => template.templateCategories, {
+    onDelete: 'SET NULL',
+  })
   template: Templates;
 
   @ManyToOne(() => Categories, (category) => category.templateCategories)

@@ -32,7 +32,7 @@ export class TemplatesService {
         this.templatesRepository.createQueryBuilder('template');
 
       if (search) {
-        queryBuilder.where('template.name ILIKE :search', {
+        queryBuilder.where('template.title ILIKE :search', {
           search: `%${search}%`,
         });
       }
