@@ -23,7 +23,10 @@ export class CategoriesService {
 
   async findOne(id: string): Promise<Categories> {
     try {
-      const category = await this.categoryRepository.findOne({ where: { id } });
+      const category = await this.categoryRepository.findOne({
+        where: { id },
+        relations: ['templates', 'products'],
+      });
       return category;
     } catch (error) {
       this.logger.error(error);
