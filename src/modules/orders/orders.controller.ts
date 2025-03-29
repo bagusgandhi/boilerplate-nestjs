@@ -14,7 +14,6 @@ export class OrdersController {
     summary: 'Create a order.',
   })
   @ApiBearerAuth()
-  @Permissions('orderManagement.createOrder')
   @Post()
   async create(
     @Body() createOrderDto: CreateOrdersDto,
