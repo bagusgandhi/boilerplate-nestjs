@@ -25,7 +25,7 @@ export class Templates extends BaseEntity {
   @Column({ nullable: true })
   img_url: string;
 
-  @OneToMany(() => TemplateCategory, (tc) => tc.template)
+  @OneToMany(() => TemplateCategory, (tc) => tc.template, { cascade: true })
   templateCategories: TemplateCategory[];
 
   @OneToMany(() => Orders, (order) => order.template)

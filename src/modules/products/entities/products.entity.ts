@@ -37,7 +37,8 @@ export class Products extends BaseEntity {
   @DeleteDateColumn({ nullable: true, name: 'deleted_at', type: 'timestamptz' })
   deletedAt: Date;
 
-  @OneToMany(() => ProductCategory, (pc) => pc.product)
+  // cascade: true
+  @OneToMany(() => ProductCategory, (pc) => pc.product, { cascade: true })
   productCategories: ProductCategory[];
 
   @OneToMany(() => Orders, (order) => order.product)
