@@ -19,10 +19,10 @@ export class Templates extends BaseEntity {
   @Column({ nullable: true })
   description: string;
 
-  @Column()
+  @Column({ nullable: true })
   url: string;
 
-  @Column()
+  @Column({ nullable: true })
   img_url: string;
 
   @OneToMany(() => TemplateCategory, (tc) => tc.template)
