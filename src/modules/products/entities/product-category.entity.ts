@@ -7,7 +7,9 @@ export class ProductCategory extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Products, (product) => product.productCategories)
+  @ManyToOne(() => Products, (product) => product.productCategories, {
+    onDelete: 'CASCADE',
+  })
   product: Products;
 
   @ManyToOne(() => Categories, (category) => category.productCategories)

@@ -41,6 +41,8 @@ export class Products extends BaseEntity {
   @OneToMany(() => ProductCategory, (pc) => pc.product, { cascade: true })
   productCategories: ProductCategory[];
 
-  @OneToMany(() => Orders, (order) => order.product)
+  @OneToMany(() => Orders, (order) => order.product, {
+    onDelete: 'SET NULL',
+  })
   orders: Orders[];
 }
