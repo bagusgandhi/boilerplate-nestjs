@@ -25,7 +25,7 @@ export class CategoriesService {
     try {
       const category = await this.categoryRepository.findOne({
         where: { id },
-        relations: ['templates', 'products'],
+        relations: ['productCategories.product', 'templateCategories.template'],
       });
       return category;
     } catch (error) {
