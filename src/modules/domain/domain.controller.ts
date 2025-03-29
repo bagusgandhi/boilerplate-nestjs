@@ -55,10 +55,18 @@ export class DomainController {
   }
 
   @ApiOperation({
-    summary: 'Get all domains.',
+    summary: 'Search a domain.',
   })
-  @ApiBearerAuth()
-  @Permissions('domainManagement.vieAllDomain')
+  @Public()
+  @Get('search')
+  async searchDomain(@Query('domain') domain: string) {
+    return this.registrarService.searchDomain(domain);
+  }
+
+  @ApiOperation({
+    summary: 'Get all domains price.',
+  })
+  @Public()
   @Get()
   async findAll(): Promise<Domain[]> {
     return this.domainService.findAll();
