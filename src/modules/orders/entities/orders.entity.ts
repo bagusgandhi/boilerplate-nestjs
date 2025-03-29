@@ -43,7 +43,10 @@ export class Orders extends BaseEntity {
   @ManyToOne(() => Promo, { nullable: true, eager: true })
   promo?: Promo;
 
-  @ManyToOne(() => Templates, (template) => template.orders, { nullable: true })
+  @ManyToOne(() => Templates, (template) => template.orders, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
   template: Templates | null;
 
   @ManyToOne(() => User, (user) => user.orders)

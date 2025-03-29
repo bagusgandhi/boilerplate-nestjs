@@ -64,7 +64,7 @@ export class ProductsController {
     summary: 'Delete a product.',
   })
   @ApiBearerAuth()
-  // @Permissions('productManagement.deleteProduct')
+  @Permissions('productManagement.deleteProduct')
   @Delete(':id')
   async delete(@Param('id') id: string): Promise<void> {
     return this.productsService.delete(id);
