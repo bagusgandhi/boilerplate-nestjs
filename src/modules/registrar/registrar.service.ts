@@ -25,6 +25,24 @@ export class RegistrarService {
     }
   }
 
+  async searchDomain(domain: string) {
+    try {
+      // if domain has dot remove it
+      const domainName = domain.replace(/\./g, '');
+      const extensions = ['.com'];
+      const promised = extensions.map((extension) =>
+        this.checkDomainAvailability(`${domainName}${extension}`),
+      );
+      const results = await Promise.all(promised);
+
+      console.info(results);
+      return results.filter((result) => result.available);
+    } catch (error) {
+      console.error(error);
+      throw new Error('Failed to search domain');
+    }
+  }
+
   async registerDomain(body: RegisterDomainDto) {
     try {
       const response = await this.httpService.axiosRef.post(
