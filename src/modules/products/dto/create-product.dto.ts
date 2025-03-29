@@ -9,10 +9,16 @@ import {
 import { ApiProperty } from '@nestjs/swagger';
 
 export enum ProductDuration {
-  SIX_MONTHS = 6,
-  TWELVE_MONTHS = 12,
-  TWENTY_FOUR_MONTHS = 24,
-  THIRTY_SIX_MONTHS = 36,
+  ONE_YEAR = 1,
+  TWO_YEARS = 2,
+  THREE_YEARS = 3,
+  FOUR_YEARS = 4,
+  FIVE_YEARS = 5,
+  SIX_YEARS = 6,
+  SEVEN_YEARS = 7,
+  EIGHT_YEARS = 8,
+  NINE_YEARS = 9,
+  TEN_YEARS = 10,
 }
 
 export class CreateProductDto {

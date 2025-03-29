@@ -25,7 +25,11 @@ export class Products extends BaseEntity {
   @Column({ type: 'decimal' })
   amount: number;
 
-  @Column({ type: 'enum', enum: [6, 12, 24, 36] })
+  @Column({
+    type: 'enum',
+    enum: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+    default: 1,
+  })
   duration: number;
 
   @CreateDateColumn({ type: 'timestamptz' })
