@@ -22,6 +22,9 @@ export class Templates extends BaseEntity {
   @Column()
   url: string;
 
+  @Column()
+  img_url: string;
+
   @OneToMany(() => TemplateCategory, (tc) => tc.template)
   templateCategories: TemplateCategory[];
 
