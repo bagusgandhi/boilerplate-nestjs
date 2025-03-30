@@ -10,12 +10,11 @@ import { UserRepository } from './repositories/user.repository';
 import { SignUpDto } from '../auth/dto/signup.dto';
 import * as bcrypt from 'bcrypt';
 import { RoleRepository } from '../role/repositories/role.repository';
-import { PaginationDto } from '../../global/dto/pagination.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UuidParamDto } from 'src/global/dto/params-id.dto';
-import { GetUserDto } from './dto/get-user.dto';
 import { SignInApiKeyDto } from '../auth/dto/signin-apikey.dto';
 import { User } from './entities/user.entity';
+import { QueryRunner } from 'typeorm';
 
 @Injectable()
 export class UserService {
@@ -107,7 +106,7 @@ export class UserService {
     }
   }
 
-  async update(id: UuidParamDto, updateUserDto: UpdateUserDto) {
+  async update(id: UuidParamDto | string, updateUserDto: UpdateUserDto) {
     try {
       const user = await this.userRepository.findById(id);
 
@@ -161,6 +160,56 @@ export class UserService {
       }
 
       return this.userRepository.save(user);
+    } catch (error) {
+      this.logger.error(error);
+      throw error;
+    }
+  }
+
+  async updateWithTransaction(
+    queryRunner: QueryRunner,
+    user: User,
+    body: UpdateUserDto,
+  ) {
+    try {
+      if (body.email) {
+        const existingUser: any = await this.userRepository.findByEmail(
+          body.email,
+        );
+        if (existingUser && existingUser.id !== user.id) {
+          throw new ConflictException('User with this email already exists');
+        }
+      }
+
+      if (body.name) {
+        user.name = body.name;
+      }
+
+      if (body.address) {
+        user.address = body.address;
+      }
+
+      if (body.phone) {
+        user.phone = body.phone;
+      }
+
+      if (body.password) {
+        const salt = await bcrypt.genSalt();
+        user.password = await bcrypt.hash(body.password, salt);
+        user.salt = salt;
+      }
+
+      if (body.roleId) {
+        const role = await this.roleRepository.findById(body.roleId);
+
+        if (!role) {
+          throw new NotFoundException('Role not found');
+        }
+
+        user.roles = [role];
+      }
+
+      return queryRunner.manager.save(User, user);
     } catch (error) {
       this.logger.error(error);
       throw error;

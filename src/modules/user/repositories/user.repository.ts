@@ -13,7 +13,7 @@ export class UserRepository extends Repository<User> {
     super(User, dataSource.createEntityManager());
   }
 
-  async findById(id: UuidParamDto) {
+  async findById(id: UuidParamDto | string) {
     try {
       const query = this.createQueryBuilder('user');
       query.leftJoinAndSelect('user.roles', 'role');
@@ -77,8 +77,8 @@ export class UserRepository extends Repository<User> {
           'user.created_at',
           'user.updated_at',
           'role.id',
-          'role.name'
-        ])
+          'role.name',
+        ]);
 
       if (roleId && roleId.length > 0) {
         query.andWhere('role.id IN (:...roleId)', { roleId });
@@ -92,9 +92,9 @@ export class UserRepository extends Repository<User> {
       }
 
       query
-      .orderBy('user.created_at', 'DESC')
-      .skip((page - 1) * limit)
-      .take(limit);
+        .orderBy('user.created_at', 'DESC')
+        .skip((page - 1) * limit)
+        .take(limit);
 
       const [results, total] = await query.getManyAndCount();
 
@@ -104,7 +104,7 @@ export class UserRepository extends Repository<User> {
         results,
       };
     } catch (error) {
-      console.log(error)
+      console.log(error);
       throw new InternalServerErrorException('Error fetching user data');
     }
   }
