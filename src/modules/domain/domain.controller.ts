@@ -55,12 +55,14 @@ export class DomainController {
   }
 
   @ApiOperation({
-    summary: 'Search a domain.',
+    summary: 'Check a domain availability.',
   })
   @Public()
-  @Get('search')
+  @Get('check')
   async searchDomain(@Query('domain') domain: string) {
-    return this.registrarService.searchDomain(domain);
+    const response =
+      await this.registrarService.checkDomainAvailability(domain);
+    return response;
   }
 
   @ApiOperation({
