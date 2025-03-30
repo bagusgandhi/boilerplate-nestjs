@@ -12,13 +12,13 @@ import {
   DeleteDateColumn,
   OneToOne,
 } from 'typeorm';
-import { Products } from 'src/modules/products/entities/products.entity';
-import { Promo } from 'src/modules/promo/entities/promo.entity';
-import { User } from 'src/modules/user/entities/user.entity';
-import { Domain } from 'src/modules/domain/entities/domain.entity';
-import { Invoice } from 'src/modules/invoice/entities/invoice.entity';
-import { Templates } from 'src/modules/templates/entities/templates.entity';
-import { Site } from 'src/modules/sites/entities/site.entity';
+import { Products } from '../../products/entities/products.entity';
+import { Promo } from '../../promo/entities/promo.entity';
+import { User } from '../../user/entities/user.entity';
+import { Domain } from '../../domain/entities/domain.entity';
+import { Invoice } from '../../invoice/entities/invoice.entity';
+import { Templates } from '../../templates/entities/templates.entity';
+import { Site } from '../../sites/entities/site.entity';
 
 export enum StatusOrder {
   ACTIVE = 'active',
