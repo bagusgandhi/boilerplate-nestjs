@@ -23,16 +23,16 @@ export class CreateOrdersDto {
     description: 'Phone number of the user',
   })
   @IsString()
-  @IsOptional()
-  phone?: string;
+  @IsNotEmpty()
+  phone: string;
 
   @ApiProperty({
     example: '123 Main St, City, Country',
     description: 'Address of the user',
   })
   @IsString()
-  @IsOptional()
-  address?: string;
+  @IsNotEmpty()
+  address: string;
 
   @ApiProperty({
     example: 'Domain ID',
@@ -55,7 +55,7 @@ export class CreateOrdersDto {
     description: 'The ID of the template',
   })
   @IsUUID()
-  @IsOptional()
+  @IsNotEmpty()
   template_id?: string;
 
   @ApiProperty({
