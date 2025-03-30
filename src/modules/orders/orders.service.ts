@@ -73,7 +73,7 @@ export class OrdersService {
       const domainAvailability =
         await this.registrarService.checkDomainAvailability(domain_name);
 
-      if (!domainAvailability.available) {
+      if (!domainAvailability?.data?.[0]?.available) {
         throw new BadRequestException('Domain has been taken');
       }
 
