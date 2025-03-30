@@ -24,6 +24,7 @@ import { StatusSite } from '../sites/dto/create-site.dto';
 import { Env } from 'src/config/env-loader';
 import { CloudflareService } from '../cloudflare/cloudflare.service';
 import { SitesService } from '../sites/sites.service';
+import { Invoice } from '../invoice/entities/invoice.entity';
 const { REGISTRAR_CUSTOMER_ID, HOST_SERVER } = Env();
 @Injectable()
 export class OrdersService {
@@ -45,7 +46,7 @@ export class OrdersService {
   async create(
     createOrderDto: CreateOrdersDto,
     user: IUserRequest,
-  ): Promise<Orders> {
+  ): Promise<{ order: Orders; invoice: Invoice }> {
     const {
       domain_name,
       domain_id,
@@ -102,16 +103,20 @@ export class OrdersService {
       await this.ordersRepository.save(order);
 
       // Create invoice
-      await this.invoiceService.createWithTransaction(queryRunner, {
-        order: order,
-        user: userData,
-        total: order.total,
-        due_date: moment().add(1, 'week').toDate(),
-        type: TypeInvoice.NEW_ORDER,
-        status: StatusInvoice.PENDING,
-      });
+      const invoiceData = await this.invoiceService.createWithTransaction(
+        queryRunner,
+        {
+          order: order,
+          user: userData,
+          total: order.total,
+          due_date: moment().add(1, 'week').toDate(),
+          type: TypeInvoice.NEW_ORDER,
+          status: StatusInvoice.PENDING,
+        },
+      );
+
       await queryRunner.commitTransaction();
-      return order;
+      return { order, invoice: invoiceData };
     } catch (error) {
       await queryRunner.rollbackTransaction();
       this.logger.error(error);
