@@ -32,6 +32,18 @@ export class InvoiceController {
   }
 
   @ApiOperation({
+    summary: 'Get a invoice by invoice number.',
+  })
+  @ApiBearerAuth()
+  @Get('me/number/:invoice_number')
+  async findOneByInvoiceNumber(
+    @Param('invoice_number') invoice_number: string,
+    @GetUser() user: IUserRequest,
+  ) {
+    return this.invoiceService.findByInvoiceUser(invoice_number, user);
+  }
+
+  @ApiOperation({
     summary: 'Get a invoice by id.',
   })
   @ApiBearerAuth()

@@ -163,4 +163,29 @@ export class InvoiceService {
       throw error;
     }
   }
+
+  async findByInvoiceUser(
+    invoice_number: string,
+    user: IUserRequest,
+  ): Promise<Invoice> {
+    try {
+      const invoice = await this.invoiceRepository.findOne({
+        where: { invoice_number, user: { id: user.id } },
+        relations: ['order', 'user'],
+        select: {
+          user: {
+            email: true,
+            name: true,
+          },
+        },
+      });
+      if (!invoice) {
+        throw new NotFoundException('Invoice not found');
+      }
+      return invoice;
+    } catch (error) {
+      this.logger.error(error);
+      throw error;
+    }
+  }
 }
