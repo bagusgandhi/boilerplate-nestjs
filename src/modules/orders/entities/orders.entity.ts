@@ -58,6 +58,12 @@ export class Orders extends BaseEntity {
   @Column({ nullable: true })
   description: string;
 
+  @Column({ nullable: true })
+  address: string;
+
+  @Column({ nullable: true })
+  phone: string;
+
   @Column('decimal')
   total: number;
 

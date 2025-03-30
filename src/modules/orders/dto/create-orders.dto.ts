@@ -1,12 +1,5 @@
-import {
-  IsString,
-  IsNotEmpty,
-  IsOptional,
-  IsUUID,
-  // IsObject,
-} from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-// import { SignUpDto } from 'src/modules/auth/dto/signup.dto';
 
 export class CreateOrdersDto {
   @ApiProperty({
@@ -24,6 +17,22 @@ export class CreateOrdersDto {
   @IsString()
   @IsOptional()
   description?: string;
+
+  @ApiProperty({
+    example: '1234567890',
+    description: 'Phone number of the user',
+  })
+  @IsString()
+  @IsOptional()
+  phone?: string;
+
+  @ApiProperty({
+    example: '123 Main St, City, Country',
+    description: 'Address of the user',
+  })
+  @IsString()
+  @IsOptional()
+  address?: string;
 
   @ApiProperty({
     example: 'Domain ID',
@@ -56,12 +65,4 @@ export class CreateOrdersDto {
   @IsUUID()
   @IsOptional()
   promo_id?: string;
-
-  // @ApiProperty({
-  //   example: 'Account',
-  //   description: 'Register Account',
-  // })
-  // @IsObject()
-  // @IsOptional()
-  // account?: SignUpDto;
 }

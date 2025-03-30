@@ -53,6 +53,8 @@ export class OrdersService {
       description,
       promo_id,
       template_id,
+      phone,
+      address,
     } = createOrderDto;
     const queryRunner =
       this.ordersRepository.manager.connection.createQueryRunner();
@@ -75,6 +77,14 @@ export class OrdersService {
         throw new BadRequestException('Domain has been taken');
       }
 
+      // update user address and phone when user dont have phone and address
+      if (!userData.phone || !userData.address) {
+        this.userService.updateWithTransaction(queryRunner, userData, {
+          address,
+          phone,
+        });
+      }
+
       // init order
       const order = new Orders();
       order.domain = domain;
@@ -85,6 +95,8 @@ export class OrdersService {
       order.user = userData;
       order.template = template;
       order.expired_date = moment().add(product.duration, 'years').toDate();
+      order.address = address;
+      order.phone = phone;
 
       // Create order
       await this.ordersRepository.save(order);
