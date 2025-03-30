@@ -144,7 +144,7 @@ export class InvoiceService {
     try {
       const invoice = await this.invoiceRepository.findOne({
         where: { id, user: { id: user.id } },
-        relations: ['order', 'user'],
+        relations: ['order.product', 'order.domain', 'order.promo', 'user'],
         select: {
           user: {
             email: true,
