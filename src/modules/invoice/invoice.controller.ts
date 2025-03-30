@@ -44,6 +44,15 @@ export class InvoiceController {
   }
 
   @ApiOperation({
+    summary: 'Get a invoice by id and user.',
+  })
+  @ApiBearerAuth()
+  @Get('me/:id')
+  async findOneByUser(@Param('id') id: string, @GetUser() user: IUserRequest) {
+    return this.invoiceService.findOneByUser(id, user);
+  }
+
+  @ApiOperation({
     summary: 'Get a invoice by id.',
   })
   @ApiBearerAuth()
@@ -53,12 +62,4 @@ export class InvoiceController {
     return this.invoiceService.findOne(id);
   }
 
-  @ApiOperation({
-    summary: 'Get a invoice by id and user.',
-  })
-  @ApiBearerAuth()
-  @Get('me/:id')
-  async findOneByUser(@Param('id') id: string, @GetUser() user: IUserRequest) {
-    return this.invoiceService.findOneByUser(id, user);
-  }
 }
