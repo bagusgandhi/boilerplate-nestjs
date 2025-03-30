@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, LessThan, Repository } from 'typeorm';
 import { Orders, StatusOrder } from './entities/orders.entity';
 import { CreateOrdersDto } from './dto/create-orders.dto';
 import { DomainService } from '../domain/domain.service';
@@ -25,6 +25,7 @@ import { Env } from 'src/config/env-loader';
 import { CloudflareService } from '../cloudflare/cloudflare.service';
 import { SitesService } from '../sites/sites.service';
 import { Invoice } from '../invoice/entities/invoice.entity';
+import { Cron, CronExpression } from '@nestjs/schedule';
 const { REGISTRAR_CUSTOMER_ID, HOST_SERVER } = Env();
 @Injectable()
 export class OrdersService {
@@ -308,6 +309,60 @@ export class OrdersService {
     } catch (error) {
       this.logger.error(error);
       throw error;
+    }
+  }
+
+  // cron for checking order expired date
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async checkOrderExpired() {
+    this.logger.log('Starting checkOrderExpired cron job');
+    const queryRunner =
+      this.ordersRepository.manager.connection.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      // get all order data with status active or renewed
+      const orders = await this.ordersRepository.find({
+        where: {
+          status: In([StatusOrder.ACTIVE, StatusOrder.RENEWED]),
+          expired_date: LessThan(new Date()),
+        },
+        relations: ['user'],
+      });
+
+      this.logger.log(`Found ${orders.length} expired orders to process`);
+
+      // update with transaction order status to expired
+      await queryRunner.manager.update(
+        Orders,
+        { id: In(orders.map((order) => order.id)) },
+        { status: StatusOrder.EXPIRED },
+      );
+
+      // when order has expired, create invoice for renewal using promise.all
+      await Promise.all(
+        orders.map(async (order) => {
+          await this.invoiceService.createWithTransaction(queryRunner, {
+            order: order,
+            user: order.user,
+            status: StatusInvoice.PENDING,
+            due_date: moment().add(1, 'week').toDate(),
+            type: TypeInvoice.RENEWAL,
+            total: order.total,
+          });
+        }),
+      );
+
+      await queryRunner.commitTransaction();
+      this.logger.log(
+        'Successfully processed expired orders and created renewal invoices',
+      );
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      this.logger.error('Error in checkOrderExpired cron job:', error);
+      throw error;
+    } finally {
+      await queryRunner.release();
     }
   }
 }
