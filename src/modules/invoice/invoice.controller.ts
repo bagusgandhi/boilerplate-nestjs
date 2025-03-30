@@ -61,5 +61,4 @@ export class InvoiceController {
   async findOne(@Param('id') id: string) {
     return this.invoiceService.findOne(id);
   }
-
 }
