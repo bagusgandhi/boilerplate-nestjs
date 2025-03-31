@@ -22,8 +22,17 @@ import { PaymentModule } from './modules/payment/payment.module';
 import { CloudflareModule } from './modules/cloudflare/cloudflare.module';
 import { SitesModule } from './modules/sites/sites.module';
 import { RegistrarModule } from './modules/registrar/registrar.module';
+import { BullModule } from '@nestjs/bullmq';
+import { QueueModule } from './modules/queue/queue.module';
 
-const { EMAIL_HOST, EMAIL_USERNAME, EMAIL_PASSWORD } = Env();
+const {
+  EMAIL_HOST,
+  EMAIL_USERNAME,
+  EMAIL_PASSWORD,
+  REDIS_HOST,
+  REDIS_PORT,
+  REDIS_PASSWORD,
+} = Env();
 
 @Module({
   imports: [
@@ -53,6 +62,14 @@ const { EMAIL_HOST, EMAIL_USERNAME, EMAIL_PASSWORD } = Env();
     CloudflareModule,
     SitesModule,
     RegistrarModule,
+    BullModule.forRoot({
+      connection: {
+        host: REDIS_HOST,
+        port: REDIS_PORT,
+        password: REDIS_PASSWORD,
+      },
+    }),
+    QueueModule,
   ],
   controllers: [],
   providers: [
