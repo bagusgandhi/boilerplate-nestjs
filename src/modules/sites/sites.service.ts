@@ -17,16 +17,16 @@ export class SitesService {
     queryRunner: QueryRunner,
     body: CreateSiteDto,
   ): Promise<Site> {
-    const site = new Site();
-    site.cloudflare_zone_id = body.cloudflare_zone_id;
-    site.db_name = body.db_name;
-    site.db_user = body.db_user;
-    site.db_password = body.db_password;
-    site.port = body.port;
-    site.status = body.status;
-    site.order = body.order;
+    const site = this.siteRepository.create({
+      cloudflare_zone_id: body.cloudflare_zone_id,
+      db_name: body.db_name,
+      db_user: body.db_user,
+      db_password: body.db_password,
+      port: body.port,
+      status: body.status,
+      order: { id: body.order.id },
+    });
 
-    await queryRunner.manager.save(Site, site);
-    return site;
+    return await queryRunner.manager.save(site);
   }
 }

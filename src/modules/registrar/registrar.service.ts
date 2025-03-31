@@ -46,7 +46,7 @@ export class RegistrarService {
   async registerDomain(body: RegisterDomainDto) {
     try {
       const response = await this.httpService.axiosRef.post(
-        `${REGISTRAR_URL}/domains/register`,
+        `${REGISTRAR_URL}/domains`,
         {
           name: body.name,
           period: body.period,

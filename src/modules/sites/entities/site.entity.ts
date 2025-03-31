@@ -8,6 +8,7 @@ import {
   DeleteDateColumn,
   OneToOne,
   Index,
+  JoinColumn,
 } from 'typeorm';
 import { Orders } from 'src/modules/orders/entities/orders.entity';
 
@@ -49,5 +50,6 @@ export class Site extends BaseEntity {
   deleted_at: Date;
 
   @OneToOne(() => Orders, (order) => order.site)
+  @JoinColumn({ name: 'order_id' })
   order: Orders;
 }
