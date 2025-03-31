@@ -89,7 +89,7 @@ export class Orders extends BaseEntity {
   @OneToMany(() => Invoice, (invoice) => invoice.order)
   invoices: Invoice[];
 
-  @OneToOne(() => Site, (site) => site.order)
+  @OneToOne(() => Site, (site) => site.order, { cascade: true })
   site: Site;
 
   @BeforeInsert()
