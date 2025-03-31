@@ -12,6 +12,8 @@ import { InvoiceModule } from '../invoice/invoice.module';
 import { RegistrarModule } from '../registrar/registrar.module';
 import { CloudflareModule } from '../cloudflare/cloudflare.module';
 import { SitesModule } from '../sites/sites.module';
+import { QueueModule } from '../queue/queue.module';
+
 @Module({
   imports: [
     ProductsModule,
@@ -23,10 +25,11 @@ import { SitesModule } from '../sites/sites.module';
     RegistrarModule,
     CloudflareModule,
     SitesModule,
+    QueueModule,
     TypeOrmModule.forFeature([Orders]),
   ],
   providers: [OrdersService],
-  exports: [],
+  exports: [OrdersService],
   controllers: [OrdersController],
 })
 export class OrdersModule {}

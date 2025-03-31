@@ -26,6 +26,7 @@ import { CloudflareService } from '../cloudflare/cloudflare.service';
 import { SitesService } from '../sites/sites.service';
 import { Invoice } from '../invoice/entities/invoice.entity';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { QueueService } from '../queue/queue.service';
 const { REGISTRAR_CUSTOMER_ID, HOST_SERVER } = Env();
 @Injectable()
 export class OrdersService {
@@ -42,6 +43,7 @@ export class OrdersService {
     private readonly registrarService: RegistrarService,
     private readonly cloudflareService: CloudflareService,
     private readonly sitesService: SitesService,
+    private readonly queueService: QueueService,
   ) {}
 
   async create(
@@ -188,6 +190,17 @@ export class OrdersService {
       });
 
       await queryRunner.commitTransaction();
+      await this.queueService.addQueueDeploy({
+        data: {
+          db_name: order.domain_name.split('.')[0],
+          db_user: order.domain_name.split('.')[0],
+          db_password: Math.random().toString(36).substring(2, 15),
+          // TODO: generate random port in range 8000 - 9000
+          port: Math.floor(Math.random() * (9000 - 8000 + 1)) + 8000,
+          domain_name: order?.domain_name,
+          demo: order?.template?.title,
+        },
+      });
       return order;
     } catch (error) {
       await queryRunner.rollbackTransaction();
