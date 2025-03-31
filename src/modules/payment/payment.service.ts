@@ -1,11 +1,12 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Payment, PaymentStatus } from './entities/payment.entity';
-import { Repository } from 'typeorm';
+import { QueryRunner, Repository } from 'typeorm';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { InvoiceService } from '../invoice/invoice.service';
 import { StatusInvoice, TypeInvoice } from '../invoice/dto/update-invoice.dto';
 import { OrdersService } from '../orders/orders.service';
+import { Invoice } from '../invoice/entities/invoice.entity';
 // import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
@@ -28,7 +29,26 @@ export class PaymentService {
     }
   }
 
+  async createWithTransaction(
+    queryRunner: QueryRunner,
+    body: CreatePaymentDto,
+    invoice: Invoice,
+  ): Promise<Payment> {
+    const payment = new Payment();
+    payment.invoice = invoice;
+    payment.transaction_details = body.transaction_details;
+    payment.amount = body.amount;
+    payment.status = body.status;
+    await queryRunner.manager.save(Payment, payment);
+    return payment;
+  }
+
+  // this only handle invoice and payment data
   async webhook(body: any): Promise<any> {
+    const queryRunner =
+      this.paymentRepository.manager.connection.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
     try {
       this.logger.log('Received Midtrans webhook:', body);
 
@@ -72,21 +92,21 @@ export class PaymentService {
             payment.status = PaymentStatus.SUCCESS;
             // Update invoice status to paid
             await this.invoiceService.updateWithTransaction(
-              this.paymentRepository.manager.connection.createQueryRunner(),
+              queryRunner,
               invoice.id,
               { status: StatusInvoice.PAID },
             );
 
-            // if (invoice.type === TypeInvoice.NEW_ORDER) {
-            //   await this.ordersService.activateOrder(invoice.order.id);
-            // }
+            if (invoice.type === TypeInvoice.NEW_ORDER) {
+              await this.ordersService.activateOrder(invoice.order.id);
+            }
           }
           break;
         case 'settlement':
           payment.status = PaymentStatus.SUCCESS;
           // Update invoice status to paid
           await this.invoiceService.updateWithTransaction(
-            this.paymentRepository.manager.connection.createQueryRunner(),
+            queryRunner,
             invoice.id,
             { status: StatusInvoice.PAID },
           );
@@ -114,16 +134,21 @@ export class PaymentService {
           payment.status = PaymentStatus.UNKNOWN;
       }
 
-      // Save the new payment
-      await this.paymentRepository.save(payment);
+      // Save the new payment using the query runner
+      await queryRunner.manager.save(Payment, payment);
+
+      await queryRunner.commitTransaction();
 
       return {
         success: true,
         message: `New payment record created for invoice ${order_id} with status ${payment.status}`,
       };
     } catch (error) {
+      await queryRunner.rollbackTransaction();
       this.logger.error('Error processing Midtrans webhook:', error);
       throw new BadRequestException(error.message);
+    } finally {
+      await queryRunner.release();
     }
   }
 }
