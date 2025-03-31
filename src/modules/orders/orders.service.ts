@@ -140,8 +140,6 @@ export class OrdersService {
         throw new BadRequestException('Order already activated');
       }
 
-      console.info('REGISTRAR_CUSTOMER_ID', REGISTRAR_CUSTOMER_ID);
-
       // register domain
       // const resReg = await this.registrarService.registerDomain({
       //   name: order.domain_name,
