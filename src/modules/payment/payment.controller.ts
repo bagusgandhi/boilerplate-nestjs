@@ -12,7 +12,9 @@ export class PaymentController {
   })
   @Public()
   @Post('w3b007hok')
-  async findAll(@Body() body: any): Promise<any> {
+  async webhook(@Body() body: any): Promise<any> {
+    // console.log(body);
+    // return true;
     return await this.paymentService.webhook(body);
   }
 }

@@ -4,7 +4,7 @@ import { Payment, PaymentStatus } from './entities/payment.entity';
 import { Repository } from 'typeorm';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { InvoiceService } from '../invoice/invoice.service';
-import { StatusInvoice } from '../invoice/dto/update-invoice.dto';
+import { StatusInvoice, TypeInvoice } from '../invoice/dto/update-invoice.dto';
 import { OrdersService } from '../orders/orders.service';
 // import { InjectRepository } from '@nestjs/typeorm';
 
@@ -39,26 +39,29 @@ export class PaymentService {
         payment_type,
         transaction_time,
         fraud_status,
+        acquirer,
+        gross_amount,
+        currency,
       } = body;
 
-      // Find the payment record
-      const payment = await this.paymentRepository.findOne({
-        where: { invoice: { id: order_id } },
-        relations: ['invoice'],
+      // Find the invoice first
+      const invoice = await this.invoiceService.findByInvoiceNumber(order_id);
+
+      console.info('invoice', invoice.order.id);
+
+      // Create new payment record
+      const payment = this.paymentRepository.create({
+        invoice,
+        transaction_details: {
+          payment_type,
+          transaction_time,
+          fraud_status,
+          transaction_status,
+          acquirer,
+          currency,
+        },
+        amount: parseInt(gross_amount),
       });
-
-      if (!payment) {
-        this.logger.error(`Payment not found for order_id: ${order_id}`);
-        throw new BadRequestException('Payment not found');
-      }
-
-      // Update payment details
-      payment.transaction_details = {
-        ...payment.transaction_details,
-        payment_type,
-        transaction_time,
-        fraud_status,
-      };
 
       // Handle different transaction statuses
       switch (transaction_status) {
@@ -70,9 +73,13 @@ export class PaymentService {
             // Update invoice status to paid
             await this.invoiceService.updateWithTransaction(
               this.paymentRepository.manager.connection.createQueryRunner(),
-              payment.invoice.id,
+              invoice.id,
               { status: StatusInvoice.PAID },
             );
+
+            // if (invoice.type === TypeInvoice.NEW_ORDER) {
+            //   await this.ordersService.activateOrder(invoice.order.id);
+            // }
           }
           break;
         case 'settlement':
@@ -80,9 +87,13 @@ export class PaymentService {
           // Update invoice status to paid
           await this.invoiceService.updateWithTransaction(
             this.paymentRepository.manager.connection.createQueryRunner(),
-            payment.invoice.id,
+            invoice.id,
             { status: StatusInvoice.PAID },
           );
+
+          if (invoice.type === TypeInvoice.NEW_ORDER) {
+            await this.ordersService.activateOrder(invoice.order.id);
+          }
           break;
         case 'pending':
           payment.status = PaymentStatus.PENDING;
@@ -103,12 +114,12 @@ export class PaymentService {
           payment.status = PaymentStatus.UNKNOWN;
       }
 
-      // Save the updated payment
+      // Save the new payment
       await this.paymentRepository.save(payment);
 
       return {
         success: true,
-        message: `Payment ${order_id} status updated to ${payment.status}`,
+        message: `New payment record created for invoice ${order_id} with status ${payment.status}`,
       };
     } catch (error) {
       this.logger.error('Error processing Midtrans webhook:', error);
