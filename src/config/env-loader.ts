@@ -22,7 +22,7 @@ export const Env = () => ({
   CLOUDFLARE_API_KEY: process.env.CLOUDFLARE_API_KEY,
   REGISTRAR_URL: process.env.REGISTRAR_URL,
   REGISTRAR_TOKEN: process.env.REGISTRAR_TOKEN,
-  REGISTRAR_CUSTOMER_ID: parseInt(process.env.REGISTRAR_CUSTOMER_ID),
+  REGISTRAR_CUSTOMER_ID: +process.env.REGISTRAR_CUSTOMER_ID,
   HOST_SERVER: process.env.HOST_SERVER,
   REDIS_HOST: process.env.REDIS_HOST,
   REDIS_PORT: +process.env.REDIS_PORT,
