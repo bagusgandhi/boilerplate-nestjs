@@ -140,15 +140,18 @@ export class OrdersService {
         throw new BadRequestException('Order already activated');
       }
 
+      console.info('REGISTRAR_CUSTOMER_ID', REGISTRAR_CUSTOMER_ID);
+
       // register domain
-      const resReg = await this.registrarService.registerDomain({
-        name: order.domain_name,
-        period: order.product.duration,
-        customer_id: REGISTRAR_CUSTOMER_ID,
-      });
+      // const resReg = await this.registrarService.registerDomain({
+      //   name: order.domain_name,
+      //   period: order.product.duration,
+      //   customer_id: REGISTRAR_CUSTOMER_ID,
+      // });
 
       // register cloudflare zones
       const resCf = await this.cloudflareService.addDomain(order.domain_name);
+      this.logger.log('resCf', resCf);
 
       // create cloudflare dns record
       await this.cloudflareService.addDnsRecord({
@@ -161,24 +164,19 @@ export class OrdersService {
       });
 
       // update NS
-      await this.registrarService.updateNS(
-        REGISTRAR_CUSTOMER_ID,
-        resReg.result.id,
-        {
-          nameservers: resCf.result.name_servers,
-        },
-      );
-
-      // update order status
-      order.status = StatusOrder.ACTIVE;
-      order.expired_date = moment()
-        .add(order.product.duration, 'years')
-        .toDate();
-      await this.ordersRepository.save(order);
+      // await this.registrarService.updateNS(
+      //   REGISTRAR_CUSTOMER_ID,
+      //   resReg.result.id,
+      //   {
+      //     nameservers: resCf.result.name_servers,
+      //   },
+      // );
 
       // create sites
       await this.sitesService.createWithTransaction(queryRunner, {
-        cloudflare_zone_id: resCf.result.id,
+        // cloudflare_zone_id: resCf.result.id,
+        cloudflare_zone_id: 'test',
+
         // TODO: generate random db name
         db_name: order.domain_name.split('.')[0],
         db_user: order.domain_name.split('.')[0],
@@ -189,7 +187,14 @@ export class OrdersService {
         order: order,
       });
 
-      await queryRunner.commitTransaction();
+      // update order status
+      order.status = StatusOrder.ACTIVE;
+      order.expired_date = moment()
+        .add(order.product.duration, 'years')
+        .toDate();
+      await this.ordersRepository.save(order);
+
+      // add job queue for deploy site
       await this.queueService.addQueueDeploy({
         data: {
           db_name: order.domain_name.split('.')[0],
@@ -198,9 +203,10 @@ export class OrdersService {
           // TODO: generate random port in range 8000 - 9000
           port: Math.floor(Math.random() * (9000 - 8000 + 1)) + 8000,
           domain_name: order?.domain_name,
-          demo: order?.template?.title,
+          demo: order?.template?.title.toLowerCase().split(' ').join('_'),
         },
       });
+      await queryRunner.commitTransaction();
       return order;
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -289,7 +295,7 @@ export class OrdersService {
           'product',
           'promo',
           'template',
-          'invoice',
+          'invoices',
         ],
       });
       if (!order) {
