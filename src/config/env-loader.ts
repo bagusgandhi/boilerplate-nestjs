@@ -24,4 +24,7 @@ export const Env = () => ({
   REGISTRAR_TOKEN: process.env.REGISTRAR_TOKEN,
   REGISTRAR_CUSTOMER_ID: parseInt(process.env.REGISTRAR_CUSTOMER_ID),
   HOST_SERVER: process.env.HOST_SERVER,
+  REDIS_HOST: process.env.REDIS_HOST,
+  REDIS_PORT: +process.env.REDIS_PORT,
+  REDIS_PASSWORD: process.env.REDIS_PASSWORD,
 });
