@@ -35,13 +35,19 @@ export class InvoiceService {
   async updateWithTransaction(
     queryRunner: QueryRunner,
     id: string,
-    body: UpdateInvoiceDto,
+    body: Partial<UpdateInvoiceDto>,
   ): Promise<Invoice> {
     const invoice = await this.findOne(id);
-    invoice.status = body.status;
-    invoice.due_date = body.due_date;
-    invoice.type = body.type;
-    invoice.description = body.description;
+
+    // Only update fields that are provided in the body
+    if (body.status !== undefined) invoice.status = body.status;
+    if (body.due_date !== undefined) invoice.due_date = body.due_date;
+    if (body.type !== undefined) invoice.type = body.type;
+    if (body.description !== undefined) invoice.description = body.description;
+    if (body.total !== undefined) invoice.total = body.total;
+    if (body.order !== undefined) invoice.order = body.order;
+    if (body.user !== undefined) invoice.user = body.user;
+
     await queryRunner.manager.save(Invoice, invoice);
     return invoice;
   }

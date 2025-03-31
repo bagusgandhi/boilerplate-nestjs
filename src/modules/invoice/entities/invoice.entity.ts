@@ -14,6 +14,7 @@ import {
 import { Orders } from 'src/modules/orders/entities/orders.entity';
 import { User } from 'src/modules/user/entities/user.entity';
 import { Payment } from 'src/modules/payment/entities/payment.entity';
+import { StatusInvoice } from '../dto/update-invoice.dto';
 
 @Entity('invoice')
 @Unique(['invoice_number'])
@@ -38,10 +39,10 @@ export class Invoice extends BaseEntity {
 
   @Column({
     type: 'enum',
-    enum: ['paid', 'pending', 'canceled'],
-    default: 'pending',
+    enum: StatusInvoice,
+    default: StatusInvoice.PENDING,
   })
-  status: string;
+  status: StatusInvoice;
 
   @Column({ type: 'timestamp', nullable: true })
   due_date: Date;
