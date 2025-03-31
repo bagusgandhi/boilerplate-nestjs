@@ -1,5 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsObject, IsString } from 'class-validator';
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsObject,
+  IsString,
+} from 'class-validator';
+import { PaymentStatus } from '../entities/payment.entity';
 
 export class CreatePaymentDto {
   @ApiProperty({
@@ -25,4 +32,12 @@ export class CreatePaymentDto {
   @IsNotEmpty()
   @IsNumber()
   amount: number;
+
+  @ApiProperty({
+    example: 'Status',
+    description: 'The status of the payment',
+  })
+  @IsNotEmpty()
+  @IsEnum(PaymentStatus)
+  status: PaymentStatus;
 }
