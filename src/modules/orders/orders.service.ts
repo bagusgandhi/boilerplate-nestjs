@@ -141,11 +141,11 @@ export class OrdersService {
       }
 
       // register domain
-      // const resReg = await this.registrarService.registerDomain({
-      //   name: order.domain_name,
-      //   period: order.product.duration,
-      //   customer_id: REGISTRAR_CUSTOMER_ID,
-      // });
+      const resReg = await this.registrarService.registerDomain({
+        name: order.domain_name,
+        period: order.product.duration,
+        customer_id: REGISTRAR_CUSTOMER_ID,
+      });
 
       // register cloudflare zones
       const resCf = await this.cloudflareService.addDomain(order.domain_name);
@@ -162,13 +162,13 @@ export class OrdersService {
       });
 
       // update NS
-      // await this.registrarService.updateNS(
-      //   REGISTRAR_CUSTOMER_ID,
-      //   resReg.result.id,
-      //   {
-      //     nameservers: resCf.result.name_servers,
-      //   },
-      // );
+      await this.registrarService.updateNS(
+        REGISTRAR_CUSTOMER_ID,
+        resReg.result.id,
+        {
+          nameservers: resCf.result.name_servers,
+        },
+      );
 
       // create sites
       await this.sitesService.createWithTransaction(queryRunner, {
