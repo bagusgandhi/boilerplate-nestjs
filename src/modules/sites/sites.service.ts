@@ -47,12 +47,12 @@ export class SitesService {
 
       const queryBuilder = this.siteRepository
         .createQueryBuilder('site')
-        .leftJoin('site.order', 'order')
+        .leftJoinAndSelect('site.order', 'order')
         .leftJoin('order.user', 'user')
         .where('user.id = :userId', { userId: user.id });
 
       if (search) {
-        queryBuilder.where('site.order.domain_name ILIKE :search', {
+        queryBuilder.where('order.domain_name ILIKE :search', {
           search: `%${search}%`,
         });
       }

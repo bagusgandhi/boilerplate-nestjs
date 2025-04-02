@@ -3,10 +3,11 @@ import { SitesService } from './sites.service';
 import { IUserRequest } from 'src/decorators/get-user.decorator';
 import { GetUser } from 'src/decorators/get-user.decorator';
 import { PaginationDto } from 'src/global/dto/pagination.dto';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ApiOperation } from '@nestjs/swagger';
 import { Permissions } from 'src/decorators/permission.decorator';
 
+@ApiTags('Sites')
 @Controller('sites')
 export class SitesController {
   constructor(private readonly siteService: SitesService) {}
