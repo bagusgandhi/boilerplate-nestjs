@@ -1,10 +1,10 @@
-import { IsOptional, IsNumber, isBoolean, IsBoolean, IsString } from 'class-validator';
-import { Transform, Type } from 'class-transformer';
+import { IsOptional, IsNumber, IsBoolean, IsString, IsUUID } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class PaginationDto {
   @ApiProperty({
-    example: "some keyword",
+    example: 'some keyword',
     description: 'Search Filter',
     required: false,
   })
@@ -35,7 +35,7 @@ export class PaginationDto {
   @ApiProperty({
     example: false,
     description: 'View All Data, Without pagination',
-    required: false
+    required: false,
   })
   @Transform(({ value }) => (value === undefined ? false : Boolean(value)))
   @IsOptional()
