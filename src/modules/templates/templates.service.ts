@@ -11,6 +11,7 @@ import { CreateTemplateDto } from './dto/create-template.dto';
 import { CategoriesService } from '../categories/categories.service';
 import { TemplateCategory } from './entities/template-category.entity';
 import { PaginationDto } from 'src/global/dto/pagination.dto';
+import { TemplatePaginationDto } from './dto/template-pagination.dto';
 
 @Injectable()
 export class TemplatesService {
@@ -22,14 +23,21 @@ export class TemplatesService {
   ) {}
 
   async findAll(
-    query: PaginationDto,
+    query: TemplatePaginationDto,
   ): Promise<{ data: Templates[]; total: number }> {
     try {
-      const { page, limit, search, viewAll } = query;
+      const { page, limit, search, viewAll, categoryId } = query;
       const skip = (page - 1) * limit;
 
       const queryBuilder =
         this.templatesRepository.createQueryBuilder('template');
+
+      if (categoryId){
+        queryBuilder
+        .leftJoinAndSelect('template.templateCategories', 'templateCategories')
+        .leftJoinAndSelect('templateCategories.category', 'category')
+        .where('category.id = :categoryId', { categoryId });
+      }
 
       if (search) {
         queryBuilder.where('template.title ILIKE :search', {

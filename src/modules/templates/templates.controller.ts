@@ -14,7 +14,7 @@ import { Templates } from './entities/templates.entity';
 import { Public } from 'src/decorators/public.decorator';
 import { Permissions } from 'src/decorators/permission.decorator';
 import { CreateTemplateDto } from './dto/create-template.dto';
-import { PaginationDto } from 'src/global/dto/pagination.dto';
+import { TemplatePaginationDto } from './dto/template-pagination.dto';
 
 @ApiTags('Templates')
 @Controller('templates')
@@ -27,7 +27,7 @@ export class TemplatesController {
   @Public()
   @Get()
   async findAll(
-    @Query() query: PaginationDto,
+    @Query() query: TemplatePaginationDto,
   ): Promise<{ data: Templates[]; total: number }> {
     return this.templatesService.findAll(query);
   }
