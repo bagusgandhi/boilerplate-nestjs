@@ -59,8 +59,9 @@ export class UserController {
   @ApiBearerAuth()
   @Patch('/profile')
   async updateProfile(
-    @GetUser() user: IUserRequest, 
-    @Body() updateUserDto: UpdateUserDto) {
+    @GetUser() user: IUserRequest,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
     return await this.userService.update(user.id as any, updateUserDto);
   }
 
