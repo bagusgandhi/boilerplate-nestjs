@@ -1,3 +1,4 @@
+import { Contract } from 'src/modules/contract/entities/contract.entity';
 import { User } from 'src/modules/user/entities/user.entity';
 import {
   BaseEntity,
@@ -24,7 +25,10 @@ export class Uploads extends BaseEntity {
   @Column({ nullable: true })
   path?: string;
 
-  @ManyToOne(() => User, (user) => user.uploads, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Contract, (contract) => contract.uploads, { onDelete: 'SET NULL' })
+  contract: Contract;
+
+  @ManyToOne(() => User, (user) => user.uploads, { onDelete: 'SET NULL' })
   user: User;
 
   @CreateDateColumn({ type: 'timestamptz' })
