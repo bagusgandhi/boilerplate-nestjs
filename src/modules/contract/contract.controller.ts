@@ -1,0 +1,145 @@
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, UploadedFiles, UseInterceptors } from '@nestjs/common';
+import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Permissions } from 'src/decorators/permission.decorator';
+import { ContractService } from './contract.service';
+import { PaginationDto } from 'src/global/dto/pagination.dto';
+import { UuidParamDto } from 'src/global/dto/params-id.dto';
+import { UpsertContractDto } from './dto/upsert-contract.dto';
+import { GetUser, IUserRequest } from 'src/decorators/get-user.decorator';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { CustomMulter } from 'src/utils/multer.options';
+import { CreateUploadsDto } from '../uploads/dto/create-uploads.dto';
+import { FilterContractDto } from './dto/filter-contract.dto';
+
+@ApiTags('Contract')
+@Controller('contract')
+export class ContractController {
+    constructor(private readonly contractService: ContractService) {}
+
+    @ApiOperation({
+        summary: 'Get all contracts.',
+    })
+    @ApiBearerAuth()
+    // @Permissions('contract.viewListOfContract')
+    @Get()
+    async findAll(@Query() query: FilterContractDto) {
+        return this.contractService.findAll(query);
+    }
+
+    @ApiOperation({
+        summary: 'Get all contracts by current user.',
+    })
+    @ApiBearerAuth()
+    @Get('me')
+    async findAllByCurrentUser(@Query() query: FilterContractDto, @GetUser() user: IUserRequest) {
+        return this.contractService.findAllByCurrentUser(query, user?.id as any);
+    }
+
+    @ApiOperation({
+        summary: 'Get contract by id by current user.',
+    })
+    @ApiBearerAuth()
+    @Get('me/:id')
+    async findByIdByCurrentUser(@Param() params: UuidParamDto, @GetUser() user: IUserRequest) {
+        return this.contractService.findByIdByCurrentUser(params.id, user?.id as any);
+    }
+
+    // post uploads file by current user
+    @ApiOperation({
+        summary: 'Uploads file by current user.',
+    })
+    @ApiConsumes('multipart/form-data')
+    @ApiBearerAuth()
+    @Post('me/:id/uploads')
+    async uploadsByCurrentUser(@Param() params: UuidParamDto, @GetUser() user: IUserRequest, @UploadedFiles() file: Express.Multer.File[]) {
+        const uploadsData: CreateUploadsDto[] = file.map((file) => ({
+            originalName: file.originalname,
+            size: file.size,
+            path: file.path,
+        }));
+        return this.contractService.uploadsByCurrentUser(params.id, uploadsData, user?.id as any);
+    }
+
+    @ApiOperation({
+        summary: 'Get contract by id.',
+    })
+    @ApiBearerAuth()
+    // @Permissions('contract.viewContract')
+    @Get(':id')
+    async findById(@Param() params: UuidParamDto) {
+        return this.contractService.findById(params.id);
+    }
+
+    @ApiOperation({
+        summary: 'Create contract.',
+    })
+    @ApiConsumes('multipart/form-data')
+    @ApiBearerAuth()
+    // @Permissions('contract.createContract')
+    @UseInterceptors(
+        FilesInterceptor(
+            'file',
+            null,
+            CustomMulter('uploads', 'file', ['png', 'jpg', 'jpeg', 'pdf', 'xlsx', 'xls', 'csv', 'doc'], 1000 * 1024),
+        ),
+    )
+    @Post()
+    async create(
+        @Body() body: UpsertContractDto,
+        @GetUser() user: IUserRequest,
+        @UploadedFiles() file: Express.Multer.File[],
+    ) {
+        const uploadsData: CreateUploadsDto[] = file.map((file) => ({
+            originalName: file.originalname,
+            size: file.size,
+            path: file.path,
+        }));
+
+        return this.contractService.create(body, user?.id as any, uploadsData);
+    }
+
+    @ApiOperation({
+        summary: 'Update contract.',
+    })
+    @ApiBearerAuth()
+    @Put(':id')
+    async update(@Param() params: UuidParamDto, @Body() body: UpsertContractDto) {
+        return this.contractService.update(params.id, body, body.step_progress_id);
+    }
+
+    @ApiOperation({
+        summary: 'Delete contract.',
+    })
+    @ApiBearerAuth()
+    // @Permissions('contract.deleteContract')
+    @Delete(':id')
+    async delete(@Param() params: UuidParamDto) {
+        return this.contractService.delete(params.id);
+    }
+
+    @ApiOperation({
+        summary: 'Uploads file contract.',
+    })
+    @ApiConsumes('multipart/form-data')
+    @ApiBearerAuth()
+    @Permissions('contract.uploadContract')
+    @Post(':id/uploads')
+    async uploads(@Param() params: UuidParamDto, @GetUser() user: IUserRequest, @UploadedFiles() file: Express.Multer.File[]) {
+        const uploadsData: CreateUploadsDto[] = file.map((file) => ({
+            originalName: file.originalname,
+            size: file.size,
+            path: file.path,
+        }));
+        return this.contractService.uploads(params.id, uploadsData, user?.id as any);
+    }
+
+    // delete uploads file contract
+    // @ApiOperation({
+    //     summary: 'Delete uploads file contract.',
+    // })
+    // @ApiBearerAuth()
+    // @Delete(':id/uploads/:uploadId')
+    // async deleteUploads(@Param() params: UuidParamDto) {
+    //     return this.contractService.deleteUploads(params.id, params.uploadId);
+    // }
+}
