@@ -11,6 +11,11 @@ import { JwtAuthGuard } from './modules/auth/guard/jwt.guard';
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { Env } from './config/env-loader';
+import { ContractModule } from './modules/contract/contract.module';
+import { StepProgressModule } from './modules/step-progress/step-progress.module';
+import { StepGroupModule } from './modules/step-group/step-group.module';
+import { BusinessPermitsModule } from './modules/business_permits/business_permits.module';
+import { CorporateDocumentsModule } from './modules/corporate_documents/corporate_documents.module';
 
 const { EMAIL_HOST, EMAIL_USERNAME, EMAIL_PASSWORD } = Env();
 
@@ -31,6 +36,11 @@ const { EMAIL_HOST, EMAIL_USERNAME, EMAIL_PASSWORD } = Env();
         },
       },
     }),
+    ContractModule,
+    StepProgressModule,
+    StepGroupModule,
+    BusinessPermitsModule,
+    CorporateDocumentsModule,
   ],
   controllers: [],
   providers: [
