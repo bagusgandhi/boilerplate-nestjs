@@ -29,18 +29,33 @@ export class UploadsService {
 
   async createWithTransaction(
     queryRunner: QueryRunner,
-    body: CreateUploadsDto,
+    body: CreateUploadsDto | CreateUploadsDto[],
     user: User,
   ) {
 
-    const newUploads = new Uploads();
-    newUploads.originalName = body.originalName;
-    newUploads.path = body.path;
-    newUploads.size = body.size;
-    newUploads.user = user
+    if(Array.isArray(body)){
+      const newUploads = body.map((upload) => {
+        const newUpload = new Uploads();
+        newUpload.originalName = upload.originalName;
+        newUpload.path = upload.path;
+        newUpload.size = upload.size;
+        newUpload.user = user;
+        newUpload.contract = upload.contract;
+        
+        return newUpload;
+      });
 
-    // Save the maintenance record using the provided transaction.
-    return queryRunner.manager.save(Uploads, newUploads);
+      return queryRunner.manager.save(Uploads, newUploads);
+    } else {
+      const newUploads = new Uploads();
+      newUploads.originalName = body.originalName;
+      newUploads.path = body.path;
+      newUploads.size = body.size;
+      newUploads.user = user;
+      newUploads.contract = body.contract;
+
+      return queryRunner.manager.save(Uploads, newUploads);
+    }
   }
 
   async create(body: CreateUploadsDto, userId: UuidParamDto) {
@@ -58,6 +73,45 @@ export class UploadsService {
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw new Error('Error create uploads: ' + error.message);
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async createMany(body: CreateUploadsDto[], userId: UuidParamDto) {
+    const queryRunner =
+      this.uploadsRepository.manager.connection.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const user: User = await this.userService.findUserById(userId);
+      const result = await this.createWithTransaction(queryRunner, body, user);
+
+      await queryRunner.commitTransaction();
+      return result;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw new Error('Error create uploads: ' + error.message);
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async delete(id: string) {
+    const queryRunner =
+      this.uploadsRepository.manager.connection.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const uploads = await this.uploadsRepository.delete(id);
+
+      await queryRunner.commitTransaction();
+      return uploads;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw new Error('Error delete uploads: ' + error.message);
     } finally {
       await queryRunner.release();
     }

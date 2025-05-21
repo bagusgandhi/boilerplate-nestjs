@@ -6,6 +6,7 @@ import {
   IsNumber,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Contract } from 'src/modules/contract/entities/contract.entity';
 
 export class CreateUploadsDto {
 
@@ -33,4 +34,10 @@ export class CreateUploadsDto {
   @IsOptional()
   path?: string;
 
+  @ApiProperty({
+    example: 'contract',
+    description: 'The contract of the upload',
+  })
+  @IsOptional()
+  contract?: Contract;
 }

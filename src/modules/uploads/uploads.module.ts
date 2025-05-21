@@ -11,5 +11,6 @@ import { UserModule } from '../user/user.module';
   ],
   controllers: [UploadsController],
   providers: [UploadsService],
+  exports: [UploadsService]
 })
 export class UploadsModule {}

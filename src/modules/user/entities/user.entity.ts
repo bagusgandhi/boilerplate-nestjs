@@ -13,6 +13,7 @@ import {
 } from 'typeorm';
 import { Role } from 'src/modules/role/entities/role.entity';
 import { Uploads } from 'src/modules/uploads/entities/uploads.entity';
+import { Contract } from 'src/modules/contract/entities/contract.entity';
 
 @Entity('user')
 @Unique(['email'])
@@ -53,6 +54,9 @@ export class User extends BaseEntity {
 
   @OneToMany(() => Uploads, (upload) => upload.user, { cascade: true })
   uploads: Uploads[];
+
+  @OneToMany(() => Contract, (contract) => contract.user, { onDelete: 'SET NULL' })
+  contracts: Contract[];
 
   @Column({ nullable: false, default: 'basic' })
   provider: string;
