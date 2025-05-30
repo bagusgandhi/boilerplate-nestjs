@@ -14,7 +14,8 @@ import {
 import { Role } from 'src/modules/role/entities/role.entity';
 import { Uploads } from 'src/modules/uploads/entities/uploads.entity';
 import { Contract } from 'src/modules/contract/entities/contract.entity';
-import { BusinessPermits } from 'src/modules/business_permits/entities/business-permits.entity';
+import { BusinessPermits } from 'src/modules/business-permits/entities/business-permits.entity';
+import { CorporateDocuments } from 'src/modules/corporate-documents/entities/corporate-documents.entity';
 
 @Entity('user')
 @Unique(['email'])
@@ -61,6 +62,9 @@ export class User extends BaseEntity {
 
   @OneToMany(() => BusinessPermits, (business_permits) => business_permits.user, { onDelete: 'SET NULL' })
   business_permits: BusinessPermits[];
+
+  @OneToMany(() => CorporateDocuments, (corporate_documents) => corporate_documents.user, { onDelete: 'SET NULL' })
+  corporate_documents: CorporateDocuments[];
 
   @Column({ nullable: false, default: 'basic' })
   provider: string;
