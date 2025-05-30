@@ -116,4 +116,27 @@ export class UploadsService {
       await queryRunner.release();
     }
   }
+
+  async deleteByCurrentUser(id: string, userId: UuidParamDto) {
+    const queryRunner =
+      this.uploadsRepository.manager.connection.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try { 
+      const uploads = await this.uploadsRepository.findOne({ where: { id, user: { id: userId?.id } } });
+      if (!uploads) {
+        throw new Error('Uploads not found');
+      }
+      await this.uploadsRepository.delete(uploads.id);
+
+      await queryRunner.commitTransaction();
+      return uploads;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw new Error('Error delete uploads: ' + error.message);
+    } finally {
+      await queryRunner.release();
+    }
+  }
 }
