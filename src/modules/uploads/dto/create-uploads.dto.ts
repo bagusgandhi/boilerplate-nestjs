@@ -7,7 +7,8 @@ import {
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Contract } from 'src/modules/contract/entities/contract.entity';
-import { BusinessPermits } from 'src/modules/business_permits/entities/business-permits.entity';
+import { BusinessPermits } from 'src/modules/business-permits/entities/business-permits.entity';
+import { CorporateDocuments } from 'src/modules/corporate-documents/entities/corporate-documents.entity';
 
 export class CreateUploadsDto {
 
@@ -48,4 +49,11 @@ export class CreateUploadsDto {
   })
   @IsOptional()
   business_permits?: BusinessPermits;
+
+  @ApiProperty({
+    example: 'corporate_documents',
+    description: 'The corporate documents of the upload',
+  })
+  @IsOptional()
+  corporate_documents?: CorporateDocuments;
 }
