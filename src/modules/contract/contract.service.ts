@@ -7,7 +7,8 @@ import {
     MoreThan,
     QueryRunner, 
     Repository, 
-    FindManyOptions 
+    FindManyOptions, 
+    ILike
 } from 'typeorm';
 import { ContractHistory } from './entities/contract-history.entity';
 import { UpsertContractDto } from './dto/upsert-contract.dto';
@@ -40,6 +41,7 @@ export class ContractService {
     async findAll(query: FilterContractDto) {
         try {
             const { 
+                search,
                 step_progress_id, 
                 start_date, 
                 end_date, 
@@ -70,6 +72,10 @@ export class ContractService {
 
             // Build where conditions
             const whereConditions: any = {};
+
+            if (search) {
+                whereConditions.contract_number = ILike(`%${search}%`);
+            }
 
             if (step_progress_id) {
                 whereConditions.step_progress = { id: In(step_progress_id) };
@@ -351,7 +357,7 @@ export class ContractService {
         }
     }
 
-    async update(id: string, body: UpsertContractDto, stepProgressId: string): Promise<{ message: string }> {
+    async update(id: string, body: UpsertContractDto): Promise<{ message: string }> {
         const queryRunner =
         this.contractRepository.manager.connection.createQueryRunner();
         await queryRunner.connect();
@@ -359,17 +365,19 @@ export class ContractService {
 
         try {
             // find step progress and contract
-            const stepProgress = await this.stepProgressService.findById(stepProgressId);
+            const stepProgress = await this.stepProgressService.findById(body.step_progress_id);
             const contract = await this.findById(id);
 
             // check when user doesnt has permission update contract on step group
-            const isAdmin = contract.user.roles.some(role => role.name === 'admin');
-            if (!isAdmin) {
-                const allowedSlugs = ['data-kurang', 'review-user'];
-                if (!allowedSlugs.includes(contract.step_progress.slug)) {
-                    throw new HttpException('You do not have permission to update this contract at its current stage', 403);
-                }
-            }
+            // const isAdmin = contract.user.roles.some(role => role.name === 'admin');
+            // if (!isAdmin) {
+            //     const allowedSlugs = ['data-kurang', 'review-user'];
+            //     if (!allowedSlugs.includes(contract.step_progress.slug)) {
+            //         throw new HttpException('You do not have permission to update this contract at its current stage', 403);
+            //     }
+            // }
+
+            body.step_progress_id = undefined;
 
             // update contract data
             await this.contractRepository.update(id, {
