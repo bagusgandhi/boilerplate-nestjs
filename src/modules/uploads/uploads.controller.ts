@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -26,11 +27,21 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { CustomMulter } from 'src/utils/multer.options';
 import { Public } from 'src/decorators/public.decorator';
 import { UploadsFileDto } from './dto/uploads-file.dto';
+import { UuidParamDto } from 'src/global/dto/params-id.dto';
 
 @ApiTags('Uploads')
 @Controller('uploads')
 export class UploadsController {
   constructor(private readonly uploadsService: UploadsService) {}
+
+  @ApiOperation({
+    summary: 'Delete uploads file by current user.',
+  })
+  @ApiBearerAuth()
+  @Delete('me/:id')
+  async deleteUploadByCurrentUser(@Param() params: UuidParamDto, @GetUser() user: IUserRequest) {
+    return this.uploadsService.deleteByCurrentUser(params.id, user?.id as any);
+  }
 
   @ApiOperation({
     summary: 'Get file',
@@ -87,4 +98,14 @@ export class UploadsController {
 
     return await this.uploadsService.create(payload, user?.id as any);
   }
+
+  @ApiOperation({
+    summary: 'Delete uploads file by id.',
+  })
+  @ApiBearerAuth()
+  @Delete(':id')
+  async deleteUpload(@Param() params: UuidParamDto) {
+    return this.uploadsService.delete(params.id);
+  }
+
 }
