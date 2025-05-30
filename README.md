@@ -1,73 +1,171 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+# Legal Integrated System API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A robust and scalable API system built with NestJS for managing legal documents, business permits, contracts, and related legal processes.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 🚀 Features
 
-## Description
+- **Business Permits Management**
+  - Create, read, update, and delete business permits
+  - Track permit status and progress
+  - File uploads and document management
+  - Search functionality across titles, permit numbers, and descriptions
+  - User-specific permit views
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- **Contract Management**
+  - Comprehensive contract lifecycle management
+  - Contract history tracking
+  - Document versioning
+  - Status tracking and progress monitoring
 
-## Installation
+- **User Management**
+  - Role-based access control
+  - User authentication and authorization
+  - User-specific views and permissions
 
-```bash
-$ npm install
+- **Document Management**
+  - Secure file uploads
+  - Document categorization
+  - File type validation
+  - Document history tracking
+
+## 🛠️ Tech Stack
+
+- **Framework:** NestJS
+- **Database:** PostgreSQL with TypeORM
+- **Authentication:** JWT (JSON Web Tokens)
+- **File Storage:** Local/Cloud Storage
+- **API Documentation:** Swagger/OpenAPI
+
+## 📋 Prerequisites
+
+- Node.js (v20.19.1 or higher)
+- PostgreSQL (v12 or higher)
+- npm or yarn package manager
+
+## 🚀 Getting Started
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/ucoal/lis-api.git
+   cd lis-api
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
+
+3. **Environment Setup**
+   Create a `.env` file in the root directory with the following variables:
+   ```env
+   # Database
+   DATABASE_HOST=localhost
+   DATABASE_PORT=5432
+   DATABASE_USERNAME=your_username
+   DATABASE_PASSWORD=your_password
+   DATABASE_NAME=legal_system_db
+
+   # JWT
+   JWT_SECRET=your_jwt_secret
+   JWT_EXPIRATION=24h
+
+   # Server
+   PORT=3000
+   NODE_ENV=development
+   ```
+
+4. **Database Migration**
+   ```bash
+   npm run migration:run
+   # or
+   yarn migration:run
+   ```
+
+5. **Start the application**
+   ```bash
+   # Development
+   npm run start:dev
+   # or
+   yarn start:dev
+
+   # Production
+   npm run start:prod
+   # or
+   yarn start:prod
+   ```
+
+## 📚 API Documentation
+
+Once the application is running, you can access the API documentation at:
+```
+http://localhost:3000/api/docs
 ```
 
-## Running the app
+## 🔐 Authentication
 
-```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+The API uses JWT (JSON Web Tokens) for authentication. Include the token in the Authorization header:
+```
+Authorization: Bearer your_jwt_token
 ```
 
-## Test
+## 📁 Project Structure
 
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+```
+src/
+├── modules/
+│   ├── business_permits/     # Business permits management
+│   ├── contract/            # Contract management
+│   ├── user/               # User management
+│   ├── uploads/           # File upload handling
+│   └── step_progress/    # Progress tracking
+├── global/               # Global utilities and configurations
+├── decorators/         # Custom decorators
+└── main.ts            # Application entry point
 ```
 
-## Support
+## 🔄 API Endpoints
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+### Business Permits
+- `GET /business-permits` - List all business permits
+- `GET /business-permits/:id` - Get specific permit
+- `POST /business-permits` - Create new permit
+- `PUT /business-permits/:id` - Update permit
+- `DELETE /business-permits/:id` - Delete permit
+- `POST /business-permits/:id/uploads` - Upload documents
 
-## Stay in touch
+### Contracts
+- `GET /contracts` - List all contracts
+- `GET /contracts/:id` - Get specific contract
+- `POST /contracts` - Create new contract
+- `PUT /contracts/:id` - Update contract
+- `DELETE /contracts/:id` - Delete contract
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+### Users
+- `GET /users` - List users
+- `GET /users/:id` - Get user details
+- `POST /users` - Create user
+- `PUT /users/:id` - Update user
+- `DELETE /users/:id` - Delete user
 
-## License
+## 🤝 Contributing
 
-Nest is [MIT licensed](LICENSE).
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 👥 Authors
+
+- Your Name - Initial work
+
+## 🙏 Acknowledgments
+
+- NestJS team for the amazing framework
+- All contributors who have helped shape this project
