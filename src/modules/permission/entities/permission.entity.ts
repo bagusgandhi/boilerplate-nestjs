@@ -7,7 +7,7 @@ export class Permission extends BaseEntity{
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ unique: true })
+  @Column({ unique: false })
   name: string;
 
   @Column({ unique: true })
