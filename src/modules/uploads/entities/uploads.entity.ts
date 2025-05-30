@@ -1,3 +1,4 @@
+import { BusinessPermits } from 'src/modules/business_permits/entities/business-permits.entity';
 import { Contract } from 'src/modules/contract/entities/contract.entity';
 import { User } from 'src/modules/user/entities/user.entity';
 import {
@@ -27,6 +28,9 @@ export class Uploads extends BaseEntity {
 
   @ManyToOne(() => Contract, (contract) => contract.uploads, { onDelete: 'SET NULL' })
   contract: Contract;
+
+  @ManyToOne(() => BusinessPermits, (businessPermits) => businessPermits.uploads, { onDelete: 'SET NULL' })
+  business_permits: BusinessPermits;
 
   @ManyToOne(() => User, (user) => user.uploads, { onDelete: 'SET NULL' })
   user: User;
