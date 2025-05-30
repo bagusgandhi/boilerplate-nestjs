@@ -14,8 +14,8 @@ import { Env } from './config/env-loader';
 import { ContractModule } from './modules/contract/contract.module';
 import { StepProgressModule } from './modules/step-progress/step-progress.module';
 import { StepGroupModule } from './modules/step-group/step-group.module';
-import { BusinessPermitsModule } from './modules/business_permits/business_permits.module';
-import { CorporateDocumentsModule } from './modules/corporate_documents/corporate_documents.module';
+import { BusinessPermitsModule } from './modules/business-permits/business-permits.module';
+import { CorporateDocumentsModule } from './modules/corporate-documents/corporate-documents.module';
 
 const { EMAIL_HOST, EMAIL_USERNAME, EMAIL_PASSWORD } = Env();
 
