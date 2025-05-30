@@ -158,13 +158,9 @@ export class PermissionService {
         withDeleted: true, // Include soft-deleted modules in the search
       });
 
-      if (existingPermission) {
-        if (existingPermission.deletedAt) {
-          existingPermission.deletedAt = null;
-          return await this.permissionRepository.save(existingPermission);
-        } else {
-          throw new ConflictException('Permission already exists and is active');
-        }
+      if (existingPermission.deletedAt) {
+        existingPermission.deletedAt = null;
+        return await this.permissionRepository.save(existingPermission);
       }
 
       const moduleData = await this.moduleRepository.findOne({
