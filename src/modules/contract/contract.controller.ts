@@ -80,7 +80,7 @@ export class ContractController {
         FilesInterceptor(
             'file',
             null,
-            CustomMulter('uploads', 'file', ['png', 'jpg', 'jpeg', 'pdf', 'xlsx', 'xls', 'csv', 'doc'], 1000 * 1024),
+            CustomMulter('contract', 'file', ['png', 'jpg', 'jpeg', 'pdf', 'xlsx', 'xls', 'csv', 'doc'], 1000 * 1024),
         ),
     )
     @Post()
@@ -101,10 +101,11 @@ export class ContractController {
     @ApiOperation({
         summary: 'Update contract.',
     })
+    // @ApiConsumes('multipart/form-data')
     @ApiBearerAuth()
     @Put(':id')
     async update(@Param() params: UuidParamDto, @Body() body: UpsertContractDto) {
-        return this.contractService.update(params.id, body, body.step_progress_id);
+        return this.contractService.update(params.id, body);
     }
 
     @ApiOperation({
@@ -122,7 +123,14 @@ export class ContractController {
     })
     @ApiConsumes('multipart/form-data')
     @ApiBearerAuth()
-    @Permissions('contract.uploadContract')
+    // @Permissions('contract.uploadContract')
+    @UseInterceptors(
+        FilesInterceptor(
+            'file',
+            null,
+            CustomMulter('contract', 'file', ['png', 'jpg', 'jpeg', 'pdf', 'xlsx', 'xls', 'csv', 'doc'], 1000 * 1024),
+        ),
+    )
     @Post(':id/uploads')
     async uploads(@Param() params: UuidParamDto, @GetUser() user: IUserRequest, @UploadedFiles() file: Express.Multer.File[]) {
         const uploadsData: CreateUploadsDto[] = file.map((file) => ({
