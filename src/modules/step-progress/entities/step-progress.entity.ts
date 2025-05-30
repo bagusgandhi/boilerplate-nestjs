@@ -12,7 +12,8 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { BusinessPermits } from 'src/modules/business_permits/entities/business-permits.entity';
+import { BusinessPermits } from 'src/modules/business-permits/entities/business-permits.entity';
+import { CorporateDocuments } from 'src/modules/corporate-documents/entities/corporate-documents.entity';
 
 @Entity('step_progress')
 export class StepProgress extends BaseEntity {
@@ -34,6 +35,9 @@ export class StepProgress extends BaseEntity {
 
   @OneToMany(() => BusinessPermits, (businessPermits) => businessPermits.step_progress)
   business_permits: BusinessPermits[];
+
+  @OneToMany(() => CorporateDocuments, (corporateDocuments) => corporateDocuments.step_progress)
+  corporate_documents: CorporateDocuments[];
 
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date;
