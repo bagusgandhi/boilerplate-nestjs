@@ -41,6 +41,7 @@ export class UploadsService {
         newUpload.size = upload.size;
         newUpload.user = user;
         newUpload.contract = upload.contract;
+        newUpload.business_permits = upload.business_permits;
         
         return newUpload;
       });
