@@ -9,16 +9,20 @@ import { ContractService } from './contract.service';
 import { StepProgressModule } from '../step-progress/step-progress.module';
 import { UserModule } from '../user/user.module';
 import { UploadsModule } from '../uploads/uploads.module';
+import { ContractApproval } from './entities/contract-approval.entity';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([
             Contract,
             ContractHistory,
+            ContractApproval,
         ]),
         StepProgressModule,
         UserModule,
         UploadsModule,
+        NotificationsModule
     ],
     controllers: [ContractController],
     providers: [ContractService]
