@@ -100,6 +100,42 @@ export class UploadsController {
   }
 
   @ApiOperation({
+    summary: 'Upload file',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBearerAuth()
+  @UseInterceptors(
+    FilesInterceptor(
+      'file',
+      null,
+      CustomMulter(
+        'user_signs',
+        'file',
+        ['png', 'jpg', 'jpeg', 'pdf', 'xlsx', 'xls', 'csv', 'doc'],
+        1000 * 1024,
+      ),
+    ),
+  )
+  @Post('user-signs')
+  async createUploadUserSigns(
+    @Body() body: UploadsFileDto,
+    @GetUser() user: IUserRequest,
+    @UploadedFiles() file: Express.Multer.File[],
+  ) {
+    const payload: CreateUploadsDto = {
+      originalName: file[0].originalname,
+      size: file[0].size,
+      path: file[0].path,
+    };
+
+    console.log(file);
+    console.log(payload);
+    console.log(user);
+
+    return await this.uploadsService.create(payload, user?.id as any);
+  }
+
+  @ApiOperation({
     summary: 'Delete uploads file by id.',
   })
   @ApiBearerAuth()
