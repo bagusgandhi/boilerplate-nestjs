@@ -10,6 +10,8 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { CustomMulter } from 'src/utils/multer.options';
 import { CreateUploadsDto } from '../uploads/dto/create-uploads.dto';
 import { FilterContractDto } from './dto/filter-contract.dto';
+import { AddApprovalDto } from './dto/add-approval.dto';
+import { ProcessDto } from './dto/process.dto';
 
 @ApiTags('Contract')
 @Controller('contract')
@@ -109,6 +111,16 @@ export class ContractController {
     }
 
     @ApiOperation({
+        summary: 'Update contract process.',
+    })
+    // @ApiConsumes('multipart/form-data')
+    @ApiBearerAuth()
+    @Put(':id/process')
+    async updateProcess(@Param() params: UuidParamDto, @Body() body: ProcessDto) {
+        return this.contractService.processContract(params.id, body);
+    }
+
+    @ApiOperation({
         summary: 'Delete contract.',
     })
     @ApiBearerAuth()
@@ -139,6 +151,38 @@ export class ContractController {
             path: file.path,
         }));
         return this.contractService.uploads(params.id, uploadsData, user?.id as any);
+    }
+
+
+    @ApiOperation({
+        summary: 'Assign Approval user to contract.',
+    })
+    @ApiBearerAuth()
+    @Post(':id/approval')
+    async assignApproval(
+        @Param() params: UuidParamDto, 
+        @Body() body: AddApprovalDto
+    ) {
+        return this.contractService.assignApprovalToContract(params.id, body)
+    }
+
+    @ApiOperation({
+        summary: 'Get Approver user to contract.',
+    })
+    @ApiBearerAuth()
+    @Get(':id/approval')
+    async getApprovalByIdContract(@Param() params: UuidParamDto) {
+        return this.contractService.getApprovalByIdContract(params.id)
+    }
+
+    // create test queue email send to all user email
+    @ApiOperation({
+        summary: 'Create test queue email send to all user email.',
+    })
+    @ApiBearerAuth()
+    @Post('test-queue-email')
+    async testQueueEmail() {
+        return this.contractService.testQueueEmail()
     }
 
     // delete uploads file contract
