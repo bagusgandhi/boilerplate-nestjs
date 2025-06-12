@@ -184,18 +184,26 @@ export class UserService {
 
   async findAll(query: any) {
     try {
-      console.log('query', query);
       const users = await this.userRepository.queryPaginate(
         query.page,
         query.limit,
         query.search,
         query.roleId,
+        query.viewAll
       );
       return users;
     } catch (error) {
       this.logger.error(error);
       throw error;
-      // throw new HttpException(error.message, error.statusCode);
+    }
+  }
+
+  async findAllNameAndEmail(){
+    try {
+      return this.userRepository.findAllNameAndEmail();
+    } catch(error){
+      this.logger.error(error);
+      throw error;
     }
   }
 
@@ -206,6 +214,16 @@ export class UserService {
     } catch (error) {
       this.logger.error(error);
       throw new HttpException(error.message, error.status);
+    }
+  }
+
+  async findAllByRoleName(roleName: string) {
+    try {
+      const users = await this.userRepository.findAllByRoleName(roleName);
+      return users;
+    } catch (error) {
+      this.logger.error(error);
+      throw error;
     }
   }
 }
