@@ -11,6 +11,16 @@ export class FilterContractDto extends PaginationDto {
     @IsOptional()
     step_progress_id: string[];
 
+    // start periode year
+    @ApiProperty({
+        example: '2025',
+        description: 'Filter by start period year',
+        required: false,
+    })
+    @IsString()
+    @IsOptional()
+    start_period_year?: string;
+
     @ApiProperty({
         example: '2025-01-01',
         description: 'Filter by start date',
