@@ -47,6 +47,15 @@ export class UserController {
   }
 
   @ApiOperation({
+    summary: 'Get all user Name and Email.',
+  })
+  @ApiBearerAuth()
+  @Get('/simple')
+  async getAllNameAndEmail() {
+    return this.userService.findAllNameAndEmail();
+  }
+
+  @ApiOperation({
     summary: 'Get current user profile.',
   })
   @ApiBearerAuth()
