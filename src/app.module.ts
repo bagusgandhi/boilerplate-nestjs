@@ -16,6 +16,8 @@ import { StepProgressModule } from './modules/step-progress/step-progress.module
 import { StepGroupModule } from './modules/step-group/step-group.module';
 import { BusinessPermitsModule } from './modules/business-permits/business-permits.module';
 import { CorporateDocumentsModule } from './modules/corporate-documents/corporate-documents.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 const { EMAIL_HOST, EMAIL_USERNAME, EMAIL_PASSWORD } = Env();
 
@@ -41,6 +43,8 @@ const { EMAIL_HOST, EMAIL_USERNAME, EMAIL_PASSWORD } = Env();
     StepGroupModule,
     BusinessPermitsModule,
     CorporateDocumentsModule,
+    NotificationsModule,
+    ScheduleModule.forRoot(),
   ],
   controllers: [],
   providers: [
