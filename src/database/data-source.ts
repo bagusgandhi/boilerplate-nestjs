@@ -12,8 +12,8 @@ const options: DataSourceOptions & SeederOptions = {
   database: DB_NAME,
   entities: ['dist/**/*.entity{.ts,.js}'],
   // entities: ['src/**/*.entity{.ts,.js}'],
-  // synchronize: true, // dont uncomment it in production
-  synchronize: false,
+  synchronize: true, // dont uncomment it in production
+  // synchronize: false,
   dropSchema: false,
   logging: true,
   seeds: ['dist/database/seeds/**/*.js'],
