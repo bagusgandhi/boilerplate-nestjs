@@ -12,7 +12,7 @@ import { CreateUploadsDto } from '../uploads/dto/create-uploads.dto';
 import { FilterContractDto } from './dto/filter-contract.dto';
 import { AddApprovalDto } from './dto/add-approval.dto';
 import { ProcessDto } from './dto/process.dto';
-import { BulkInsertDto } from '../business-permits-approve/dto/bulk-insert.dto';
+import { BulkInsertDto } from 'src/global/dto/bulk-insert.dto';
 
 @ApiTags('Contract')
 @Controller('contract')
