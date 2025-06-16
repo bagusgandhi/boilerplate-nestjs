@@ -12,6 +12,7 @@ import { CreateUploadsDto } from '../uploads/dto/create-uploads.dto';
 import { FilterContractDto } from './dto/filter-contract.dto';
 import { AddApprovalDto } from './dto/add-approval.dto';
 import { ProcessDto } from './dto/process.dto';
+import { BulkInsertDto } from '../business-permits-approve/dto/bulk-insert.dto';
 
 @ApiTags('Contract')
 @Controller('contract')
@@ -26,6 +27,34 @@ export class ContractController {
     @Get()
     async findAll(@Query() query: FilterContractDto) {
         return this.contractService.findAll(query);
+    }
+
+    @ApiOperation({
+        summary: 'Get all approved contracts.',
+    })
+    @ApiBearerAuth()
+    // @Permissions('contract.viewListOfContract')
+    @Get("approved")
+    async findAllApproved(@Query() query: FilterContractDto) {
+        return this.contractService.findAllApproved(query);
+    }
+
+    @ApiOperation({
+        summary: 'import csv file contract.',
+    })
+    @ApiConsumes('multipart/form-data')
+    @ApiBearerAuth()
+    // @Permissions('contract.importCsv')
+    @UseInterceptors(
+        FilesInterceptor(
+            'file',
+            null,
+            CustomMulter('constract-approve-import', 'uploads', ['text/csv'], 1000 * 1024),
+        ),
+    )
+    @Post('import')
+    async import(@Body() body: BulkInsertDto, @GetUser() user: IUserRequest, @UploadedFiles() file: Express.Multer.File[]) {
+        return this.contractService.bulkImportCsv(file[0].path, user.id as any);
     }
 
     @ApiOperation({
