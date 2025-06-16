@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>UCOAL Resources</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        border: 0;
+      }
+
+      p,
+      li {
+        line-height: 24px;
+        font-size: 14px;
+        color: #a2b1cf;
+      }
+
+      a {
+        text-decoration: underline;
+        line-height: 24px;
+        font-size: 14px;
+        color: #7f8ae4;
+        cursor: pointer;
+      }
+
+      .wrapper {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        color: #244a8d;
+        font-family: sans-serif;
+      }
+
+      .container,
+      .content {
+        display: block;
+      }
+
+      .mb-2{
+        margin-bottom: 2rem;
+      }
+
+      .text-center{text-align: center}
+
+      .container {
+        background-color: #f4f8ff;
+        padding: 48px 28px;
+        width: min-content;
+      }
+
+      .content {
+        min-width: 480px;
+
+        background-color: #fff;
+        padding: 48px 22px;
+        border-radius: 12px;
+        text-align: center;
+      }
+
+      @media only screen and (max-width: 600px) {
+        .content {
+          min-width: 260px;
+        }
+      }
+
+      .catatanContainer {
+        text-align: center;
+        list-style-position: inside;
+      }
+
+      .lihatStatus {
+        background-color: #2f7ded;
+        color: white;
+        padding: 8px 20px;
+        border-radius: 6px;
+        text-decoration: none;
+        transition: 600ms;
+      }
+
+      .lihatStatus:hover {
+        background-color: #336fc4;
+      }
+
+      .footer p {
+        color: black !important;
+      }
+
+      .socials {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        gap: 24px;
+        margin-top: 24px;
+      }
+
+      table{
+        border-radius: 10px;
+        border-collapse: collapse;
+        width: 70%;
+        font-size: 12px;
+        text-align: left;
+        min-width: 390px;
+        margin: auto;
+      }
+
+      td,th{
+        padding: 3px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="wrapper">
+      <div class="container">
+        <!-- ====== LOGO UCOAL ====== -->
+        <div class="text-center mb-2">
+          <img src="https://www.ucoal.co.id/templates/core/img/logo-ucoal-new.png" alt="Logo UCOAL Resources" width="140px" />
+        </div>
+
+        <div class="content">
+          <h2 class="mb-2"></h2>
+
+          <table class="mb-2">
+            <tbody>
+              <tr>
+                <td width="100px">No Kontrak</td>
+                <td>: {{contract_number}}</td>
+              </tr>
+              <tr>
+                <td width="100px">Nama</td>
+                <td>: {{userName}}</td>
+              </tr>
+              <tr>
+                <td width="100px">Judul</td>
+                <td>: {{title}}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p>
+            {{description}}
+          </p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
