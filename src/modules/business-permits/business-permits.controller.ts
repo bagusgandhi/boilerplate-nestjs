@@ -8,7 +8,7 @@ import { CreateUploadsDto } from '../uploads/dto/create-uploads.dto';
 import { FilterBusinessPermitsDto } from './dto/filter-business-permits.dto';
 import { UuidParamDto } from 'src/global/dto/params-id.dto';
 import { UpsertBusinessPermitsDto } from './dto/upsert-business-permits.dto';
-import { BulkInsertDto } from '../business-permits-approve/dto/bulk-insert.dto';
+import { BulkInsertDto } from 'src/global/dto/bulk-insert.dto';
 
 @ApiTags('Business Permits')
 @Controller('business-permits')
