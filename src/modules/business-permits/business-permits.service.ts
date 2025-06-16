@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindManyOptions, ILike, In, LessThan, MoreThan, QueryRunner, Repository } from 'typeorm';
+import { Brackets, FindManyOptions, ILike, In, LessThan, MoreThan, QueryRunner, Repository } from 'typeorm';
 import { BusinessPermits } from './entities/business-permits.entity';
 import { StepProgressService } from '../step-progress/step-progress.service';
 import { UserService } from '../user/user.service';
@@ -16,6 +16,13 @@ import { CreateUploadsDto } from '../uploads/dto/create-uploads.dto';
 import { User } from '../user/entities/user.entity';
 import { StepProgress } from '../step-progress/entities/step-progress.entity';
 import { BusinessPermitsHistory } from './entities/business-permits-history.entity';
+import { promisify } from 'util';
+import * as fs from 'fs';
+import * as csvParser from 'csv-parser';
+import { pipeline } from 'stream';
+
+const pipelineAsync = promisify(pipeline);
+
 
 @Injectable()
 export class BusinessPermitsService {
@@ -33,71 +40,61 @@ export class BusinessPermitsService {
 
     async findAll(query: FilterBusinessPermitsDto) {
         try {
-            const { 
+            const {
                 search,
-                step_progress_id, 
-                start_date, 
+                step_progress_id,
+                start_date,
                 end_date,
                 viewAll,
                 page = 0,
-                limit = 10 
+                limit = 10
             } = query;
 
-            // Base query options
-            const queryOptions: FindManyOptions<BusinessPermits> = {
-                relations: ['step_progress'],
-                order: {
-                    created_at: 'DESC' as const
-                },
-                select: {
-                    id: true,
-                    title: true,
-                    business_permits_number: true,
-                    description: true,
-                    start_date: true,
-                    end_date: true,
-                    notes: true,
-                    created_at: true,
-                },
-                where: {}
-            };
+            // Start building the query with QueryBuilder
+            const queryBuilder = this.businessPermitsRepository.createQueryBuilder('business_permit')
+                .leftJoinAndSelect('business_permit.step_progress', 'step_progress')
+                .orderBy('business_permit.created_at', 'DESC');  // Order by created_at DESC
 
-            // Build where conditions
-            const whereConditions: any = {};
-
+            // Apply search condition if search term is provided
             if (search) {
-                whereConditions.title = ILike(`%${search}%`);
+                queryBuilder.andWhere(
+                    new Brackets(qb => {
+                        qb.where('business_permit.title ILIKE :search', { search: `%${search}%` })
+                            .orWhere('business_permit.business_permits_number ILIKE :search', { search: `%${search}%` });
+                    })
+                );
             }
 
             if (step_progress_id) {
-                whereConditions.step_progress = { id: In(step_progress_id) };
+                queryBuilder.andWhere('step_progress.id IN (:...step_progress_id)', { step_progress_id });
             }
 
+            // Handle date range filtering using moment.js
             if (start_date) {
                 const startOfDay = moment(start_date).startOf('day').toDate();
-                whereConditions.start_date = MoreThan(startOfDay);
+                queryBuilder.andWhere('business_permit.start_date > :start_date', { start_date: startOfDay });
             }
 
             if (end_date) {
                 const endOfDay = moment(end_date).endOf('day').toDate();
-                whereConditions.end_date = LessThan(endOfDay);
+                queryBuilder.andWhere('business_permit.end_date < :end_date', { end_date: endOfDay });
             }
 
+            // If viewAll is false, exclude deleted records
             if (!viewAll) {
-                whereConditions.deletedAt = null;
-                queryOptions.skip = page * limit;
-                queryOptions.take = limit;
+                queryBuilder.andWhere('business_permit.deletedAt IS NULL');
             }
 
-            queryOptions.where = whereConditions;
+            // Apply pagination
+            if (!viewAll) {
+                queryBuilder.skip(page * limit).take(limit);
+            }
 
-            // Execute query
-            const businessPermits = await this.businessPermitsRepository.find(queryOptions);
-            
+            // Execute the query to get the filtered business permits
+            const businessPermits = await queryBuilder.getMany();
+
             // Get total count for pagination if needed
-            const total = !viewAll ? await this.businessPermitsRepository.count({
-                where: whereConditions
-            }) : businessPermits.length;
+            const total = !viewAll ? await queryBuilder.getCount() : businessPermits.length;
 
             return {
                 data: businessPermits,
@@ -106,8 +103,82 @@ export class BusinessPermitsService {
                 limit: Number(limit),
                 totalPages: !viewAll ? Math.ceil(total / limit) : 1
             };
+
         } catch (error) {
-            this.logger.error(error);
+            this.logger.error('Error in findAll:', error);
+            throw error;
+        }
+    }
+
+    async findAllApproved(query: FilterBusinessPermitsDto) {
+        try {
+            const {
+                search,
+                step_progress_id,
+                start_date,
+                end_date,
+                viewAll,
+                page = 0,
+                limit = 10
+            } = query;
+
+            // Start building the query with QueryBuilder
+            const queryBuilder = this.businessPermitsRepository.createQueryBuilder('business_permit')
+                .leftJoinAndSelect('business_permit.step_progress', 'step_progress')
+                .where('step_progress.slug = :slug', { slug: 'selesai' }) // Only get contracts with step_progress slug 'selesai'
+                .orderBy('business_permit.start_date', 'DESC', 'NULLS LAST');  // Order by created_at DESC
+
+            // Apply search condition if search term is provided
+            if (search) {
+                queryBuilder.andWhere(
+                    new Brackets(qb => {
+                        qb.where('business_permit.title ILIKE :search', { search: `%${search}%` })
+                            .orWhere('business_permit.business_permits_number ILIKE :search', { search: `%${search}%` });
+                    })
+                );
+            }
+
+            if (step_progress_id) {
+                queryBuilder.andWhere('step_progress.id IN (:...step_progress_id)', { step_progress_id });
+            }
+
+            // Handle date range filtering using moment.js
+            if (start_date) {
+                const startOfDay = moment(start_date).startOf('day').toDate();
+                queryBuilder.andWhere('business_permit.start_date > :start_date', { start_date: startOfDay });
+            }
+
+            if (end_date) {
+                const endOfDay = moment(end_date).endOf('day').toDate();
+                queryBuilder.andWhere('business_permit.end_date < :end_date', { end_date: endOfDay });
+            }
+
+            // If viewAll is false, exclude deleted records
+            if (!viewAll) {
+                queryBuilder.andWhere('business_permit.deletedAt IS NULL');
+            }
+
+            // Apply pagination
+            if (!viewAll) {
+                queryBuilder.skip(page * limit).take(limit);
+            }
+
+            // Execute the query to get the filtered business permits
+            const businessPermits = await queryBuilder.getMany();
+
+            // Get total count for pagination if needed
+            const total = !viewAll ? await queryBuilder.getCount() : businessPermits.length;
+
+            return {
+                data: businessPermits,
+                total,
+                page: Number(page),
+                limit: Number(limit),
+                totalPages: !viewAll ? Math.ceil(total / limit) : 1
+            };
+
+        } catch (error) {
+            this.logger.error('Error in findAll:', error);
             throw error;
         }
     }
@@ -356,15 +427,6 @@ export class BusinessPermitsService {
             const stepProgress = await this.stepProgressService.findById(body.step_progress_id);
             const businessPermits = await this.findById(id);
 
-            // check when user doesnt has permission update contract on step group
-            // const isAdmin = contract.user.roles.some(role => role.name === 'admin');
-            // if (!isAdmin) {
-            //     const allowedSlugs = ['data-kurang', 'review-user'];
-            //     if (!allowedSlugs.includes(contract.step_progress.slug)) {
-            //         throw new HttpException('You do not have permission to update this contract at its current stage', 403);
-            //     }
-            // }
-
             body.step_progress_id = undefined;
 
             // update contract data
@@ -424,4 +486,130 @@ export class BusinessPermitsService {
             throw error;
         }
     }
+
+    parseDate(dateStr: string): any {
+        const indonesianMonths = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        let locale = 'en';
+        for (const month of indonesianMonths) {
+            if (dateStr.includes(month)) {
+                locale = 'id';
+                break;
+            }
+        }
+
+        moment.locale(locale);
+
+        const parsedDate = moment(dateStr, ['DD MMM YYYY', 'DD MMMM YYYY']);
+        return parsedDate.isValid() ? parsedDate : null;
+    }
+    
+    async bulkImportCsv(filePath: string, userId: UuidParamDto): Promise<void> {
+        const results: BusinessPermits[] = [];
+        const batchSize = 10000;
+
+        // find step progress slug == selesai
+        const stepProgress = await this.stepProgressService.findBySlug("selesai");
+
+        try {
+
+            await pipelineAsync(
+                fs.createReadStream(filePath),
+                csvParser(),
+                async (source: NodeJS.ReadableStream) => {
+                    for await (const row of source) {
+
+                        // Sanitize keys to avoid issues with spaces in CSV headers
+                        const sanitizedRow = Object.keys(row).reduce((acc, key) => {
+                            acc[key.trim()] = row[key];
+                            return acc;
+                        }, {});
+
+                        const businessPermit = new BusinessPermits();
+                        businessPermit.title = sanitizedRow["jenis_dokumen"];
+                        businessPermit.business_permits_number = sanitizedRow["nomor_surat"];
+
+                        // Handle start_date dynamically (either English or Indonesian month)
+                        const startDate = this.parseDate(sanitizedRow["tanggal_terbit"]);
+                        if (!startDate) {
+                            console.error(`Invalid start_date: ${sanitizedRow["tanggal_terbit"]}`);
+                            continue;  // Skip the row if the date is invalid
+                        }
+                        businessPermit.start_date = startDate.toDate();
+
+                        // Validate reminder_date
+                        const reminderDate = moment(sanitizedRow["remind"], 'DD-MMM-YYYY');
+                        if (!reminderDate.isValid()) {
+                            console.error(`Invalid reminder_date: ${sanitizedRow["remind"]}`);
+                            continue; // Skip the row if the date is invalid
+                        }
+                        businessPermit.reminder_date = reminderDate.toDate();
+
+                        // Validate end_date (exither English or Indonesian month)
+                        const endDate = this.parseDate(sanitizedRow["tanggal_habis"]);
+                        if (!endDate) {
+                            console.error(`Invalid end_date: ${sanitizedRow["tanggal_habis"]}`);
+                            continue; // Skip the row if the date is invalid
+                        }
+                        businessPermit.end_date = endDate.toDate();
+                        businessPermit.description = sanitizedRow["keterangan"];
+                        businessPermit.user = { id: userId.id } as User; // Set user from request
+                        businessPermit.step_progress = stepProgress; // Set step progress to "selesai"
+
+                        results.push(businessPermit);
+
+                        // If batch size reached, save the results and reset
+                        if (results.length >= batchSize) {
+                            await this.saveBatch(results); // Call bulk upsert here
+                            results.length = 0;  // Clear the results array after saving
+                        }
+                    }
+                }
+            );
+
+            // Save any remaining results after processing the file
+            if (results.length > 0) {
+                await this.saveBatch(results);
+            }
+
+            console.log(`CSV file processed successfully. Total records: ${results}`);
+        } catch (error) {
+            console.error('Error importing CSV file', error);
+            throw error;
+        }
+    }
+
+    async saveBatch(results: BusinessPermits[]): Promise<void> {
+        const queryBuilder = this.businessPermitsRepository.createQueryBuilder();
+
+        // Prepare the values to be upserted
+        const values = results.map(item => ({
+            title: item.title,
+            business_permits_number: item.business_permits_number,
+            start_date: item.start_date,
+            reminder_date: item.reminder_date,
+            end_date: item.end_date,
+            description: item.description
+        }));
+
+        try {
+            // Perform the bulk upsert using ON CONFLICT for PostgreSQL
+            await queryBuilder
+                .insert()
+                .into(BusinessPermits)
+                .values(values)
+            //     .onConflict(`("business_permits_number") DO UPDATE SET
+            //   "title" = EXCLUDED."title",
+            //   "start_date" = EXCLUDED."start_date",
+            //   "reminder_date" = EXCLUDED."reminder_date",
+            //   "end_date" = EXCLUDED."end_date",
+            //   "description" = EXCLUDED."description"`)
+                .execute();
+
+            console.log(`Successfully saved batch of ${values.length} records.`);
+        } catch (error) {
+            console.error('Error during bulk upsert:', error);
+            throw error;
+        }
+    }
+
 }
