@@ -8,7 +8,7 @@ import { CreateUploadsDto } from '../uploads/dto/create-uploads.dto';
 import { FilterCorporateDocumentsDto } from './dto/filter-corporate-documents.dto';
 import { UuidParamDto } from 'src/global/dto/params-id.dto';
 import { UpsertCorporateDocumentsDto } from './dto/upsert-corporate-documents.dto';
-import { BulkInsertDto } from '../business-permits-approve/dto/bulk-insert.dto';
+import { BulkInsertDto } from 'src/global/dto/bulk-insert.dto';
 
 @ApiTags('Corporate Documents')
 @Controller('corporate-documents')
