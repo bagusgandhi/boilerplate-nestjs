@@ -1,13 +1,13 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindManyOptions, ILike, In, LessThan, MoreThan, QueryRunner, Repository } from 'typeorm';
+import { Brackets, FindManyOptions, ILike, In, LessThan, MoreThan, QueryRunner, Repository } from 'typeorm';
 import { CorporateDocuments } from './entities/corporate-documents.entity';
 import { CorporateDocumentsHistory } from './entities/corporate-documents-history.entity';
 import { StepProgressService } from '../step-progress/step-progress.service';
 import { UserService } from '../user/user.service';
 import { UploadsService } from '../uploads/uploads.service';
 import { FilterCorporateDocumentsDto } from './dto/filter-corporate-documents.dto';
-import moment from 'moment';
+import * as moment from 'moment';
 import { FilterContractDto } from '../contract/dto/filter-contract.dto';
 import { PaginationDto } from 'src/global/dto/pagination.dto';
 import { IUserRequest } from 'src/decorators/get-user.decorator';
@@ -16,6 +16,13 @@ import { UuidParamDto } from 'src/global/dto/params-id.dto';
 import { CreateUploadsDto } from '../uploads/dto/create-uploads.dto';
 import { User } from '../user/entities/user.entity';
 import { StepProgress } from '../step-progress/entities/step-progress.entity';
+import * as fs from 'fs';
+import * as csvParser from 'csv-parser';
+import { pipeline } from 'stream';
+import { promisify } from 'util';
+
+const pipelineAsync = promisify(pipeline);
+
 
 @Injectable()
 export class CorporateDocumentsService {
@@ -29,75 +36,69 @@ export class CorporateDocumentsService {
         private stepProgressService: StepProgressService,
         private userService: UserService,
         private uploadsService: UploadsService,
-    ) {}
+    ) { }
 
     async findAll(query: FilterCorporateDocumentsDto) {
         try {
-            const { 
+            const {
                 search,
-                step_progress_id, 
-                start_date, 
+                step_progress_id,
+                start_date,
                 end_date,
                 viewAll,
                 page = 0,
-                limit = 10 
+                limit = 10
             } = query;
 
-            // Base query options
-            const queryOptions: FindManyOptions<CorporateDocuments> = {
-                relations: ['step_progress'],
-                order: {
-                    created_at: 'DESC' as const
-                },
-                select: {
-                    id: true,
-                    title: true,
-                    corporate_documents_number: true,
-                    description: true,
-                    start_date: true,
-                    end_date: true,
-                    notes: true,
-                    created_at: true,
-                },
-                where: {}
-            };
+            // Start building the query
+            const queryBuilder = this.corporateDocumentsRepository.createQueryBuilder('cd')
+                .leftJoinAndSelect('cd.step_progress', 'step_progress')
+                .orderBy('cd.created_at', 'DESC')
+                .select([
+                    'cd.id',
+                    'cd.title',
+                    'cd.corporate_documents_number',
+                    'cd.description',
+                    'cd.start_date',
+                    'cd.end_date',
+                    'cd.notes',
+                    'cd.created_at'
+                ]);
 
-            // Build where conditions
-            const whereConditions: any = {};
-
+            // Apply search condition if search term is provided
             if (search) {
-                whereConditions.title = ILike(`%${search}%`);
+                queryBuilder.andWhere(
+                    new Brackets(qb => {
+                        qb.where('cd.title ILIKE :search', { search: `%${search}%` })
+                            .orWhere('cd.corporate_documents_number ILIKE :search', { search: `%${search}%` });
+                    })
+                );
             }
 
             if (step_progress_id) {
-                whereConditions.step_progress = { id: In(step_progress_id) };
+                queryBuilder.andWhere('cd.step_progress_id IN (:...step_progress_id)', { step_progress_id });
             }
 
             if (start_date) {
                 const startOfDay = moment(start_date).startOf('day').toDate();
-                whereConditions.start_date = MoreThan(startOfDay);
+                queryBuilder.andWhere('cd.start_date > :start_date', { start_date: startOfDay });
             }
 
             if (end_date) {
                 const endOfDay = moment(end_date).endOf('day').toDate();
-                whereConditions.end_date = LessThan(endOfDay);
+                queryBuilder.andWhere('cd.end_date < :end_date', { end_date: endOfDay });
             }
 
             if (!viewAll) {
-                whereConditions.deletedAt = null;
-                queryOptions.skip = page * limit;
-                queryOptions.take = limit;
+                queryBuilder.andWhere('cd.deletedAt IS NULL');
+                queryBuilder.skip(page * limit).take(limit);
             }
 
-            queryOptions.where = whereConditions;
+            // Execute the query and get the results
+            const corporateDocuments = await queryBuilder.getMany();
 
-            // Execute query
-            const corporateDocuments = await this.corporateDocumentsRepository.find(queryOptions);
-            
             // Get total count for pagination if needed
-            const total = !viewAll ? await this.corporateDocumentsRepository.count({
-                where: whereConditions
-            }) : corporateDocuments.length;
+            const total = !viewAll ? await queryBuilder.getCount() : corporateDocuments.length;
 
             return {
                 data: corporateDocuments,
@@ -112,15 +113,92 @@ export class CorporateDocumentsService {
         }
     }
 
-    async findAllByCurrentUser(query: FilterContractDto, userId: string) {
+    async findAllApproved(query: FilterCorporateDocumentsDto) {
         try {
-            const { 
-                step_progress_id, 
-                start_date, 
-                end_date, 
+            const {
+                search,
+                step_progress_id,
+                start_date,
+                end_date,
                 viewAll,
                 page = 0,
-                limit = 10 
+                limit = 10
+            } = query;
+
+            // Start building the query
+            const queryBuilder = this.corporateDocumentsRepository.createQueryBuilder('cd')
+                .leftJoinAndSelect('cd.step_progress', 'step_progress')
+                .where('step_progress.slug = :slug', { slug: 'selesai' }) // Only get contracts with step_progress slug 'selesai'
+                .orderBy('cd.created_at', 'DESC')
+                .select([
+                    'cd.id',
+                    'cd.title',
+                    'cd.corporate_documents_number',
+                    'cd.description',
+                    'cd.start_date',
+                    'cd.end_date',
+                    'cd.notes',
+                    'cd.created_at'
+                ]);
+
+            // Apply search condition if search term is provided
+            if (search) {
+                queryBuilder.andWhere(
+                    new Brackets(qb => {
+                        qb.where('cd.title ILIKE :search', { search: `%${search}%` })
+                            .orWhere('cd.corporate_documents_number ILIKE :search', { search: `%${search}%` });
+                    })
+                );
+            }
+
+            if (step_progress_id) {
+                queryBuilder.andWhere('cd.step_progress_id IN (:...step_progress_id)', { step_progress_id });
+            }
+
+            if (start_date) {
+                const startOfDay = moment(start_date).startOf('day').toDate();
+                queryBuilder.andWhere('cd.start_date > :start_date', { start_date: startOfDay });
+            }
+
+            if (end_date) {
+                const endOfDay = moment(end_date).endOf('day').toDate();
+                queryBuilder.andWhere('cd.end_date < :end_date', { end_date: endOfDay });
+            }
+
+            if (!viewAll) {
+                queryBuilder.andWhere('cd.deletedAt IS NULL');
+                queryBuilder.skip(page * limit).take(limit);
+            }
+
+            // Execute the query and get the results
+            const corporateDocuments = await queryBuilder.getMany();
+
+            // Get total count for pagination if needed
+            const total = !viewAll ? await queryBuilder.getCount() : corporateDocuments.length;
+
+            return {
+                data: corporateDocuments,
+                total,
+                page: Number(page),
+                limit: Number(limit),
+                totalPages: !viewAll ? Math.ceil(total / limit) : 1
+            };
+        } catch (error) {
+            this.logger.error(error);
+            throw error;
+        }
+    }
+
+
+    async findAllByCurrentUser(query: FilterContractDto, userId: string) {
+        try {
+            const {
+                step_progress_id,
+                start_date,
+                end_date,
+                viewAll,
+                page = 0,
+                limit = 10
             } = query;
 
             // Base query options
@@ -171,7 +249,7 @@ export class CorporateDocumentsService {
 
             // Execute query
             const corporateDocuments = await this.corporateDocumentsRepository.find(queryOptions);
-            
+
             // Get total count for pagination if needed
             const total = !viewAll ? await this.corporateDocumentsRepository.count({
                 where: whereConditions
@@ -234,7 +312,7 @@ export class CorporateDocumentsService {
     async findByUser(
         user: IUserRequest,
         query: PaginationDto,
-    ) : Promise<{ data: CorporateDocuments[]; total: number }>{
+    ): Promise<{ data: CorporateDocuments[]; total: number }> {
         try {
             const { page, limit, search, viewAll } = query;
             const skip = (page - 1) * limit;
@@ -279,7 +357,7 @@ export class CorporateDocumentsService {
 
     async create(body: UpsertCorporateDocumentsDto, userId: UuidParamDto, uploadsData: CreateUploadsDto[]) {
         const queryRunner =
-        this.corporateDocumentsRepository.manager.connection.createQueryRunner();
+            this.corporateDocumentsRepository.manager.connection.createQueryRunner();
         await queryRunner.connect();
         await queryRunner.startTransaction();
 
@@ -346,7 +424,7 @@ export class CorporateDocumentsService {
 
     async update(id: string, body: UpsertCorporateDocumentsDto): Promise<{ message: string }> {
         const queryRunner =
-        this.corporateDocumentsRepository.manager.connection.createQueryRunner();
+            this.corporateDocumentsRepository.manager.connection.createQueryRunner();
         await queryRunner.connect();
         await queryRunner.startTransaction();
 
@@ -405,12 +483,129 @@ export class CorporateDocumentsService {
                 newUpload.path = upload.path;
                 newUpload.size = upload.size;
                 newUpload.corporate_documents = corporateDocument;
-                return newUpload;   
+                return newUpload;
             });
             await this.uploadsService.createMany(uploadsPayload, userId);
             return { message: "File Successfully Added" }
         } catch (error) {
             this.logger.error(error);
+            throw error;
+        }
+    }
+
+    parseDate(dateStr: string): any {
+        const indonesianMonths = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        let locale = 'en';
+        for (const month of indonesianMonths) {
+            if (dateStr.includes(month)) {
+                locale = 'id';
+                break;
+            }
+        }
+
+        moment.locale(locale);
+
+        const parsedDate = moment(dateStr, ['DD MMM YYYY', 'DD MMMM YYYY', 'DD/MM/YYYY', 'DD-MMM-YYYY']);
+        return parsedDate.isValid() ? parsedDate : null;
+    }
+
+    async bulkImportCsv(filePath: string, userId: UuidParamDto): Promise<void> {
+        const results: CorporateDocuments[] = [];
+        const batchSize = 10000;
+
+        try {
+
+            // find step progress by slug === selesao
+            const stepProgress = await this.stepProgressService.findBySlug("selesai");
+
+
+            await pipelineAsync(
+                fs.createReadStream(filePath),
+                csvParser(),
+                async (source: NodeJS.ReadableStream) => {
+                    for await (const row of source) {
+
+                        // Sanitize keys to avoid issues with spaces in CSV headers
+                        const sanitizedRow = Object.keys(row).reduce((acc, key) => {
+                            acc[key.trim()] = row[key];
+                            return acc;
+                        }, {});
+
+
+                        const corporateDocuments = new CorporateDocuments();
+                        corporateDocuments.title = sanitizedRow["JENIS DOKUMEN"];
+                        corporateDocuments.corporate_documents_number = sanitizedRow["NOMOR SURAT"];
+
+                        // Handle start_date dynamically (either English or Indonesian month)
+                        const startDate = this.parseDate(sanitizedRow["TANGGAL DIKELUARKAN"]);
+                        !startDate ? corporateDocuments.start_date = null : corporateDocuments.start_date = startDate.toDate();
+
+                        // Validate reminder_date
+                        const reminderDate = this.parseDate(sanitizedRow["REMIND"]);
+                        !reminderDate ? corporateDocuments.reminder_date = null : corporateDocuments.reminder_date = reminderDate.toDate();
+
+                        // Validate end_date (exither English or Indonesian month)
+                        const endDate = this.parseDate(sanitizedRow["TANGGAL EXPIRED"]);
+                        !endDate ? corporateDocuments.end_date = null : corporateDocuments.end_date = endDate.toDate();
+
+                        corporateDocuments.description = sanitizedRow["KETERANGAN"];
+                        corporateDocuments.notary = sanitizedRow["NOTARIS"];
+                        corporateDocuments.user = { id: userId.id } as User; // Set user from request
+                        corporateDocuments.step_progress = stepProgress;
+
+
+                        this.logger.log(`Parsed corporate document: ${JSON.stringify(corporateDocuments)}`);
+
+                        results.push(corporateDocuments);
+
+                        // If batch size reached, save the results and reset
+                        if (results.length >= batchSize) {
+                            await this.saveBatch(results); // Call bulk upsert here
+                            results.length = 0;  // Clear the results array after saving
+                        }
+                    }
+                }
+            );
+
+            // Save any remaining results after processing the file
+            if (results.length > 0) {
+                await this.saveBatch(results);
+            }
+
+            this.logger.log(`CSV file processed successfully. Total records: ${results}`);
+        } catch (error) {
+            this.logger.error('Error importing CSV file', error);
+            throw error;
+        }
+    }
+
+    async saveBatch(results: CorporateDocuments[]): Promise<void> {
+        const queryBuilder = this.corporateDocumentsRepository.createQueryBuilder();
+
+        // Prepare the values to be upserted
+        const values = results.map(item => ({
+            title: item.title,
+            corporate_documents_number: item.corporate_documents_number,
+            start_date: item.start_date,
+            reminder_date: item.reminder_date,
+            end_date: item.end_date,
+            description: item.description,
+            notary: item.notary
+        }));
+
+        // console.log(values[0])
+
+        try {
+            // Perform the bulk upsert using ON CONFLICT for PostgreSQL
+            await queryBuilder
+                .insert()
+                .into(CorporateDocuments)
+                .values(values)
+                .execute();
+
+            console.log(`Successfully saved batch of ${values.length} records.`);
+        } catch (error) {
+            console.error('Error during bulk upsert:', error);
             throw error;
         }
     }
