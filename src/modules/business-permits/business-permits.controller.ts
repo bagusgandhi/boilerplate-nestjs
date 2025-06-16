@@ -8,6 +8,7 @@ import { CreateUploadsDto } from '../uploads/dto/create-uploads.dto';
 import { FilterBusinessPermitsDto } from './dto/filter-business-permits.dto';
 import { UuidParamDto } from 'src/global/dto/params-id.dto';
 import { UpsertBusinessPermitsDto } from './dto/upsert-business-permits.dto';
+import { BulkInsertDto } from '../business-permits-approve/dto/bulk-insert.dto';
 
 @ApiTags('Business Permits')
 @Controller('business-permits')
@@ -22,6 +23,34 @@ export class BusinessPermitsController {
     @Get()
     async findAll(@Query() query: FilterBusinessPermitsDto) {
         return this.businessPermitsService.findAll(query);
+    }
+
+    @ApiOperation({
+        summary: 'Get all approved business permits.',
+    })
+    @ApiBearerAuth()
+    // @Permissions('contract.viewListOfContract')
+    @Get("approved")
+    async findAllApproved(@Query() query: FilterBusinessPermitsDto) {
+        return this.businessPermitsService.findAllApproved(query);
+    }
+
+    @ApiOperation({
+        summary: 'import csv file business permits.',
+    })
+    @ApiConsumes('multipart/form-data')
+    @ApiBearerAuth()
+    // @Permissions('business-permits.uploadBusinessPermits')
+    @UseInterceptors(
+        FilesInterceptor(
+            'file',
+            null,
+            CustomMulter('business-permits-import', 'uploads', ['text/csv'], 1000 * 1024),
+        ),
+    )
+    @Post('import')
+    async bulkImport(@Body() body: BulkInsertDto, @GetUser() user: IUserRequest, @UploadedFiles() file: Express.Multer.File[]) {
+        return this.businessPermitsService.bulkImportCsv(file[0].path, user.id as any);
     }
 
     @ApiOperation({
