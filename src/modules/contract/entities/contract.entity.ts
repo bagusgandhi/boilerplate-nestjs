@@ -7,14 +7,17 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { ContractHistory } from './contract-history.entity';
+import { ContractApproval } from './contract-approval.entity';
 
 @Entity('contract')
+@Index(['contract_number'], { unique: true })
 export class Contract extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -22,7 +25,7 @@ export class Contract extends BaseEntity {
   @Column()
   title: string;
 
-  @Column()
+  @Column({ nullable: false })
   contract_number: string;
 
   @Column({ nullable: true })
@@ -33,6 +36,9 @@ export class Contract extends BaseEntity {
 
   @Column({ nullable: true, type: 'timestamptz' })
   start_date?: Date;
+
+  @Column({ nullable: true, type: 'timestamptz' })
+  reminder_date?: Date;
 
   @Column({ nullable: true, type: 'timestamptz' })
   end_date?: Date;
@@ -105,6 +111,9 @@ export class Contract extends BaseEntity {
     eager: true, // optional, loads history automatically
   })
   contract_history: ContractHistory[];
+
+  @OneToMany(() => ContractApproval, (contract_approval) => contract_approval.contract, { onDelete: 'SET NULL' })
+  contract_approvals: ContractApproval[];
 
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date;
