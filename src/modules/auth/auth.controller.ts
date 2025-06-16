@@ -51,6 +51,13 @@ export class AuthController {
     return await this.authService.signInWithApiKey(signInApiKeyDto, 'google');
   }
 
+  @UseGuards(ApiKeyGuard)
+  @Public()
+  @Post('/azure-ad')
+  async signInWithAzureAd(@Body() signInApiKeyDto: SignInApiKeyDto) {
+    return await this.authService.signInWithApiKey(signInApiKeyDto, 'azure-ad');
+  }
+
   @ApiOperation({
     summary: 'Forgot password',
   })
