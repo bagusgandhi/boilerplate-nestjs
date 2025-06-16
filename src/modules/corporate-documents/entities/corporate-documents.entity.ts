@@ -20,12 +20,18 @@ export class CorporateDocuments extends BaseEntity {
 
     @Column({ nullable: true, type: 'timestamptz' })
     start_date?: Date;
+
+    @Column({ nullable: true, type: 'timestamptz' })
+    reminder_date?: Date;
   
     @Column({ nullable: true, type: 'timestamptz' })
     end_date?: Date;
 
     @Column({ nullable: true, type: 'text' })
     notes?: string;
+
+    @Column({ nullable: true })
+    notary?: string;
 
     @ManyToOne(() => StepProgress, (stepProgress) => stepProgress.business_permits, { 
         onDelete: 'SET NULL',
@@ -36,7 +42,7 @@ export class CorporateDocuments extends BaseEntity {
     @OneToMany(() => Uploads, (upload) => upload.corporate_documents, { onDelete: 'SET NULL'})
     uploads: Uploads[];
 
-    @ManyToOne(() => User, (user) => user.business_permits, { onDelete: 'SET NULL' })
+    @ManyToOne(() => User, (user) => user.corporate_documents, { onDelete: 'SET NULL' })
     user: User;
 
     @OneToMany(() => CorporateDocumentsHistory, history => history.corporate_documents, {
