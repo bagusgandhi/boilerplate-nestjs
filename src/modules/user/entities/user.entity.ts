@@ -17,6 +17,7 @@ import { Contract } from 'src/modules/contract/entities/contract.entity';
 import { BusinessPermits } from 'src/modules/business-permits/entities/business-permits.entity';
 import { CorporateDocuments } from 'src/modules/corporate-documents/entities/corporate-documents.entity';
 import { ContractApproval } from 'src/modules/contract/entities/contract-approval.entity';
+import { Notifications } from 'src/modules/notifications/entities/notification.entity';
 
 @Entity('user')
 @Unique(['email'])
@@ -69,6 +70,9 @@ export class User extends BaseEntity {
 
   @OneToMany(() => CorporateDocuments, (corporate_documents) => corporate_documents.user, { onDelete: 'SET NULL' })
   corporate_documents: CorporateDocuments[];
+
+  @OneToMany(() => Notifications, (notifications) => notifications.user, { onDelete: 'SET NULL' })
+  notifications: Notifications[];
 
   @Column({ nullable: false, default: 'basic' })
   provider: string;
