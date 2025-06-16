@@ -70,6 +70,7 @@ export class ContractService {
                 .leftJoinAndSelect('contract.user', 'user')
                 .leftJoinAndSelect('contract.contract_approvals', 'contract_approvals')
                 .leftJoinAndSelect('contract_approvals.user', 'contract_approval_user')
+                .where('step_progress.slug != :slug', { slug: 'selesai' })
                 .orderBy('contract.created_at', 'DESC');  // Order by created_at DESC
 
             // Apply search condition if search term is provided
