@@ -40,6 +40,7 @@ export class UploadsService {
         newUpload.path = upload.path;
         newUpload.size = upload.size;
         newUpload.user = user;
+
         newUpload.contract = upload.contract;
         newUpload.business_permits = upload.business_permits;
         newUpload.corporate_documents = upload.corporate_documents;
@@ -54,7 +55,10 @@ export class UploadsService {
       newUploads.path = body.path;
       newUploads.size = body.size;
       newUploads.user = user;
+
       newUploads.contract = body.contract;
+      newUploads.business_permits = body.business_permits;
+      newUploads.corporate_documents = body.corporate_documents;
 
       return queryRunner.manager.save(Uploads, newUploads);
     }
