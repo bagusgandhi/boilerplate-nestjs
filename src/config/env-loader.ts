@@ -14,4 +14,5 @@ export const Env = () => ({
   EMAIL_HOST: process.env.EMAIL_HOST,
   EMAIL_USERNAME: process.env.EMAIL_USERNAME,
   EMAIL_PASSWORD: process.env.EMAIL_PASSWORD,
+  EMAIL_PORT: +process.env.EMAIL_PORT || 587, // Default to 587 if not set
 });
