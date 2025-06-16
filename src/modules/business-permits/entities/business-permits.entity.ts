@@ -20,6 +20,9 @@ export class BusinessPermits extends BaseEntity {
 
     @Column({ nullable: true, type: 'timestamptz' })
     start_date?: Date;
+
+    @Column({ nullable: true, type: 'timestamptz' })
+    reminder_date?: Date;
   
     @Column({ nullable: true, type: 'timestamptz' })
     end_date?: Date;
