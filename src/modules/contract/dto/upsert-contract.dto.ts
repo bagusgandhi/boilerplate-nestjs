@@ -214,16 +214,6 @@ export class UpsertContractDto {
   @IsOptional()
   payment_and_taxes?: string;
 
-  // add step progress id (for updating contract)
-  @ApiProperty({
-    example: '1234567890',
-    description: 'The step progress id of the contract (for updating contract)',
-    required: false,
-  })
-  @IsString()
-  @IsOptional()
-  step_progress_id?: string;
-
   @ApiPropertyOptional({
     description: 'file',
     format: 'binary',
