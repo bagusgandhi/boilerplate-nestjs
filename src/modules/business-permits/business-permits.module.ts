@@ -7,6 +7,7 @@ import { UploadsModule } from '../uploads/uploads.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BusinessPermits } from './entities/business-permits.entity';
 import { BusinessPermitsHistory } from './entities/business-permits-history.entity';
+import { NotificationsModule } from '../notifications/notifications.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -16,6 +17,7 @@ import { BusinessPermitsHistory } from './entities/business-permits-history.enti
     StepProgressModule,
     UserModule,
     UploadsModule,
+    NotificationsModule
   ],
   controllers: [BusinessPermitsController],
   providers: [BusinessPermitsService]
