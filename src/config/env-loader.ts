@@ -17,4 +17,5 @@ export const Env = () => ({
   EMAIL_PORT: +process.env.EMAIL_PORT || 587, // Default to 587 if not set
   REDIS_HOST: process.env.REDIS_HOST,
   REDIS_PORT: +process.env.REDIS_PORT || 6379, // Default to 6379 if not set
+  EMAIL_FROM: process.env.EMAIL_FROM || "Legal Integrated System <bagus.pratama@ucoal-sumberdaya.com>"
 });
