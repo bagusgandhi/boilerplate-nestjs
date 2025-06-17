@@ -22,6 +22,24 @@ export class FilterContractDto extends PaginationDto {
     start_period_year?: string;
 
     @ApiProperty({
+        example: '2025',
+        description: 'Filter by end period year',
+        required: false,
+    })
+    @IsString()
+    @IsOptional()
+    end_period_year?: string;
+
+    @ApiProperty({
+        example: '2025',
+        description: 'Filter by reminder period year',
+        required: false,
+    })
+    @IsString()
+    @IsOptional()
+    reminder_period_year?: string;
+
+    @ApiProperty({
         example: '2025-01-01',
         description: 'Filter by start date',
         required: false,
