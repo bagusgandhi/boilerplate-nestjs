@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { User } from '../entities/user.entity';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { UuidParamDto } from 'src/global/dto/params-id.dto';
 
 @Injectable()
@@ -120,9 +120,9 @@ export class UserRepository extends Repository<User> {
     }
   }
   
-  async findAllByRoleName(roleName: string) {
+  async findAllByRoleName(roleName: string[]) {
     try {
-      const users = await this.find({ where: { roles: { name: roleName } } });
+      const users = await this.find({ where: { roles: { name: In(roleName) } }, relations: ['roles'] });
       return users;
     } catch (error) {
       throw new InternalServerErrorException('Error fetching user data');
