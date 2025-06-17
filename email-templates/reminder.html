@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UCOAL Resources</title>
+    <style>
+      /* General Reset */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      
+      body {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        background-color: #f4f8ff;
+        color: #244a8d;
+      }
+
+      h1, h2, h3 {
+        font-family: 'Arial', sans-serif;
+        color: #244a8d;
+      }
+
+      p {
+        font-size: 16px;
+        color: #555;
+      }
+
+      table {
+        width: 100%;
+        margin-bottom: 20px;
+      }
+
+      table td {
+        padding: 8px;
+        font-size: 14px;
+        color: #7f8ae4;
+      }
+
+      /* Container Styling */
+      .wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #f4f8ff;
+      }
+
+      .container {
+        background-color: white;
+        padding: 40px;
+        width: 100%;
+        max-width: 600px;
+        border-radius: 12px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      /* Logo Styling */
+      .logo {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      .logo img {
+        max-width: 140px;
+      }
+
+      /* Content Styling */
+      .content {
+        text-align: left;
+      }
+
+      .content h2 {
+        font-size: 24px;
+        margin-bottom: 20px;
+      }
+
+      .content p {
+        margin-bottom: 20px;
+        font-size: 16px;
+        color: #555;
+      }
+
+      .content strong {
+        color: #244a8d;
+      }
+
+      /* Button Wrapper */
+      .button-wrapper {
+        display: flex; /* Enable flexbox for centering */
+        justify-content: center; /* Horizontally center the button */
+        margin-top: 20px; /* Add some spacing above the button */
+      }
+
+      /* Button Styling */
+      .button {
+        display: inline-block;
+        padding: 6px 12px;
+        background-color: #3ffe75;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        transition: 0.3s;
+        font-weight: bold;
+      }
+
+      .button:hover {
+        background-color: #38d765;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="wrapper">
+      <div class="container">
+        <!-- ====== LOGO UCOAL ====== -->
+        <div class="logo">
+          <img src="https://www.ucoal.co.id/templates/core/img/logo-ucoal-new.png" alt="Logo UCOAL Resources" />
+        </div>
+
+        <div class="content">
+          <!-- <h2>LIS Reminder</h2> -->
+
+          <p>
+            Hai <strong>{{userName}}</strong>,<br />
+            Kami ingin mengingatkan Anda bahwa dokumen <strong>{{type}}</strong> akan segera berakhir. Silakan periksa detail di bawah ini:
+          </p>
+
+          <table>
+            <tbody>
+              <tr>
+                <td>No Kontrak</td>
+                <td>: <strong>{{number}}</strong></td>
+              </tr>
+              <tr>
+                <td>Judul</td>
+                <td>: <strong>{{title}}</strong></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="button-wrapper">
+            <a href="{{url}}" class="button">
+              <strong>Lihat Detail</strong>
+            </a>
+          </div>
+
+          <p>Deskripsi:</p>
+          <p>{{description}}</p>
+
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
