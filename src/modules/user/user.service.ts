@@ -16,6 +16,7 @@ import { UuidParamDto } from 'src/global/dto/params-id.dto';
 import { GetUserDto } from './dto/get-user.dto';
 import { SignInApiKeyDto } from '../auth/dto/signin-apikey.dto';
 import { User } from './entities/user.entity';
+import { In } from 'typeorm';
 
 @Injectable()
 export class UserService {
@@ -217,9 +218,9 @@ export class UserService {
     }
   }
 
-  async findAllByRoleName(roleName: string) {
+  async findAllByRoleName(roleNames: string[]): Promise<User[]> {
     try {
-      const users = await this.userRepository.findAllByRoleName(roleName);
+      const users = await this.userRepository.findAllByRoleName(roleNames);
       return users;
     } catch (error) {
       this.logger.error(error);
