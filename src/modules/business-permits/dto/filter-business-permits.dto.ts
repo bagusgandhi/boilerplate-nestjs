@@ -12,6 +12,33 @@ export class FilterBusinessPermitsDto extends PaginationDto {
     step_progress_id: string[];
 
     @ApiProperty({
+        example: '2025',
+        description: 'Filter by start period year',
+        required: false,
+    })
+    @IsString()
+    @IsOptional()
+    start_period_year?: string;
+
+    @ApiProperty({
+        example: '2025',
+        description: 'Filter by end period year',
+        required: false,
+    })
+    @IsString()
+    @IsOptional()
+    end_period_year?: string;
+
+    @ApiProperty({
+        example: '2025',
+        description: 'Filter by reminder period year',
+        required: false,
+    })
+    @IsString()
+    @IsOptional()
+    reminder_period_year?: string;
+
+    @ApiProperty({
         example: '2025-01-01',
         description: 'Filter by start date',
         required: false,
