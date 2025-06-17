@@ -9,7 +9,8 @@ import {
     Repository, 
     FindManyOptions, 
     ILike,
-    Brackets
+    Brackets,
+    Between
 } from 'typeorm';
 import { ContractHistory } from './entities/contract-history.entity';
 import { UpsertContractDto } from './dto/upsert-contract.dto';
@@ -32,6 +33,7 @@ import { ContractApproval } from './entities/contract-approval.entity';
 import { AddApprovalDto } from './dto/add-approval.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ProcessDto } from './dto/process.dto';
+import { Cron } from '@nestjs/schedule';
 
 const pipelineAsync = promisify(pipeline);
 
@@ -133,6 +135,8 @@ export class ContractService {
             const {
                 search,
                 start_period_year,
+                end_period_year,
+                reminder_period_year,
                 viewAll,
                 page = 0,
                 limit = 10
@@ -151,7 +155,8 @@ export class ContractService {
                 queryBuilder.andWhere(
                     new Brackets(qb => {
                         qb.where('contract.title ILIKE :search', { search: `%${search}%` })
-                            .orWhere('contract.contract_number ILIKE :search', { search: `%${search}%` });
+                            .orWhere('contract.contract_number ILIKE :search', { search: `%${search}%` })
+                            .orWhere('contract.description ILIKE :search', { search: `%${search}%` });
                     })
                 );
             }
@@ -161,6 +166,26 @@ export class ContractService {
                 const startDate = new Date(`${start_period_year}-01-01`);
                 const endDate = new Date(`${start_period_year}-12-31`);
                 queryBuilder.andWhere('contract.start_date BETWEEN :start AND :end', {
+                    start: startDate,
+                    end: endDate
+                });
+            }
+
+            // Apply end_period_year condition if provided
+            if (end_period_year) {
+                const startDate = new Date(`${end_period_year}-01-01`);
+                const endDate = new Date(`${end_period_year}-12-31`);
+                queryBuilder.andWhere('contract.end_date BETWEEN :start AND :end', {
+                    start: startDate,
+                    end: endDate
+                });
+            }
+
+            // Apply reminder_period_year condition if provided
+            if (reminder_period_year) {
+                const startDate = new Date(`${reminder_period_year}-01-01`);
+                const endDate = new Date(`${reminder_period_year}-12-31`);
+                queryBuilder.andWhere('contract.reminder_date BETWEEN :start AND :end', {
                     start: startDate,
                     end: endDate
                 });
@@ -429,12 +454,18 @@ export class ContractService {
             await queryRunner.commitTransaction();
 
             // send notification to user when contract is created
-            const usersLegal = await this.userService.findAllByRoleName('Department Legal');
+            const usersLegal = await this.userService.findAllByRoleName(['Department Legal']);
             usersLegal.forEach((user) => {
                 this.notificationsService.addQueueEmail({
                     to: user.email,
                     subject: 'Pengajuan Baru',
-                    html: 'Pengajuan Baru'
+                    templateName: 'email-contract-notification',
+                    context: {
+                        title: savedContract.title,
+                        contract_number: savedContract.contract_number,
+                        userName: user.name,
+                        description: savedContract.description,
+                    },
                 })
             })
 
@@ -519,7 +550,13 @@ export class ContractService {
                         this.notificationsService.addQueueEmail({
                             to: contract.user.email,
                             subject: 'Pengajuan Sedang Diproses',
-                            html: 'Pengajuan Sedang Diproses'
+                            templateName: 'email-contract-notification',
+                            context: {
+                                title: contract.title,
+                                contract_number: contract.contract_number,
+                                userName: contract.user.name,
+                                description: contract.description,
+                            },
                         })
                     }
                     break;
@@ -531,7 +568,13 @@ export class ContractService {
                         this.notificationsService.addQueueEmail({
                             to: contract.user.email,
                             subject: 'Pengajuan Berhasil Diajukan Kembali',
-                            html: 'Pengajuan Berhasil Diajukan Kembali'
+                            templateName: 'email-contract-notification',
+                            context: {
+                                title: contract.title,
+                                contract_number: contract.contract_number,
+                                userName: contract.user.name,
+                                description: contract.description,
+                            },
                         })
                     }
 
@@ -566,7 +609,13 @@ export class ContractService {
                         this.notificationsService.addQueueEmail({
                             to: contract.user.email,
                             subject: 'Pengajuan Sedang dilakukan proses paraf',
-                            html: 'Pengajuan Sedang dilakukan proses paraf'
+                            templateName: 'email-contract-notification',
+                            context: {
+                                title: contract.title,
+                                contract_number: contract.contract_number,
+                                userName: contract.user.name,
+                                description: contract.description,
+                            },
                         })
 
                         const filteredAndSortedApprovals = contract.contract_approvals
@@ -575,19 +624,19 @@ export class ContractService {
 
                         if (filteredAndSortedApprovals && filteredAndSortedApprovals.length > 0) {
                             const firstItem = filteredAndSortedApprovals[0];
-                            this.notificationsService.addQueueEmail({
-                                to: firstItem?.user?.email,
-                                subject: `Hai ${firstItem?.user?.name}, Terdapat Dokumen Baru untuk Paraf`,
-                                html: 'Pengajuan Sedang dilakukan proses paraf'
-                            });
+                            // this.notificationsService.addQueueEmail({
+                            //     to: firstItem?.user?.email,
+                            //     subject: `Hai ${firstItem?.user?.name}, Terdapat Dokumen Baru untuk Paraf`,
+                            //     html: 'Pengajuan Sedang dilakukan proses paraf'
+                            // });
                         }
                         
                     } else {
-                        this.notificationsService.addQueueEmail({
-                            to: contract.user.email,
-                            subject: 'Pengajuan Ditolak, harap lengkapi data',
-                            html: 'Pengajuan Ditolak, harap lengkapi data'
-                        })
+                        // this.notificationsService.addQueueEmail({
+                        //     to: contract.user.email,
+                        //     subject: 'Pengajuan Ditolak, harap lengkapi data',
+                        //     html: 'Pengajuan Ditolak, harap lengkapi data'
+                        // })
                     }
                     break;
                 // case 'review-mitra':
@@ -731,14 +780,14 @@ export class ContractService {
             roleId: ''
         });
 
-        users?.results?.forEach((user) => {
-            // console.log(user.email);
-            this.notificationsService.addQueueEmail({
-                to: user.email,
-                subject: 'Test Email',
-                html: 'Test Email'
-            })
-        });
+        // users?.results?.forEach((user) => {
+        //     // console.log(user.email);
+        //     this.notificationsService.addQueueEmail({
+        //         to: user.email,
+        //         subject: 'Test Email',
+        //         // html: 'Test Email'
+        //     })
+        // });
 
         return users;
 
@@ -874,6 +923,54 @@ export class ContractService {
             // console.log(`Successfully saved batch of ${values.length} records.`);
         } catch (error) {
             console.log('Error during bulk upsert:', error);
+            throw error;
+        }
+    }
+
+    @Cron('* * 8 * * *') // cron every at 08:00:00 AM
+    async cronScheduleReminderContract() {
+        try {
+            // filter reminder date range today and tomorrow
+            const today = moment().startOf('day').toDate();
+            const tomorrow = moment().add(1, 'day').startOf('day').toDate();
+            const contractsData = await this.contractRepository.find({
+                where: {
+                    reminder_date: Between(today, tomorrow),
+                    deletedAt: null,
+                },
+                relations: ['user'],
+            });
+
+            // find all user when role is Department Legal
+            const users: User[] = await this.userService.findAllByRoleName(["Department Legal"]);
+
+            if (contractsData.length === 0) {
+                this.logger.log('No contract data found with reminder date today or tomorrow.');
+                return;
+            } else {
+                // Send reminder emails
+                for (const contract of contractsData) {
+                    for (const user of users) {
+                        this.notificationsService.addQueueEmail({
+                            to: user.email,
+                            subject: `Reminder: Kontrak Segera Berakhir`,
+                            templateName: 'reminder',
+                            context: {
+                                userName: user.name,
+                                title: contract.title,
+                                url: `http://localhost:3001/dashboard/perjanjian/${contract.id}`,
+                                number: contract.contract_number,
+                                type: 'Kontrak',
+                                description: contract.description,
+                                reminder_date: moment(contract.reminder_date).format('DD MMMM YYYY'),
+                            },
+                        });
+                    }
+                }
+            }
+
+        } catch (error) {
+            this.logger.log('Error in cronScheduleReminderContract:', error);
             throw error;
         }
     }
