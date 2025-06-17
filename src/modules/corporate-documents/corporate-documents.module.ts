@@ -7,6 +7,7 @@ import { CorporateDocumentsHistory } from './entities/corporate-documents-histor
 import { StepProgressModule } from '../step-progress/step-progress.module';
 import { UserModule } from '../user/user.module';
 import { UploadsModule } from '../uploads/uploads.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { UploadsModule } from '../uploads/uploads.module';
     StepProgressModule,
     UserModule,
     UploadsModule,
+    NotificationsModule
   ],
   controllers: [CorporateDocumentsController],
   providers: [CorporateDocumentsService],
