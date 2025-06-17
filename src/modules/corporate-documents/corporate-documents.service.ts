@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, FindManyOptions, ILike, In, LessThan, MoreThan, QueryRunner, Repository } from 'typeorm';
+import { Between, Brackets, FindManyOptions, ILike, In, LessThan, MoreThan, QueryRunner, Repository } from 'typeorm';
 import { CorporateDocuments } from './entities/corporate-documents.entity';
 import { CorporateDocumentsHistory } from './entities/corporate-documents-history.entity';
 import { StepProgressService } from '../step-progress/step-progress.service';
@@ -20,6 +20,8 @@ import * as fs from 'fs';
 import * as csvParser from 'csv-parser';
 import { pipeline } from 'stream';
 import { promisify } from 'util';
+import { NotificationsService } from '../notifications/notifications.service';
+import { Cron } from '@nestjs/schedule';
 
 const pipelineAsync = promisify(pipeline);
 
@@ -36,6 +38,7 @@ export class CorporateDocumentsService {
         private stepProgressService: StepProgressService,
         private userService: UserService,
         private uploadsService: UploadsService,
+        private notificationsService: NotificationsService, // Assuming you have a NotificationsService for email notifications
     ) { }
 
     async findAll(query: FilterCorporateDocumentsDto) {
@@ -118,8 +121,9 @@ export class CorporateDocumentsService {
             const {
                 search,
                 step_progress_id,
-                start_date,
-                end_date,
+                start_period_year,
+                end_period_year,
+                reminder_period_year,
                 viewAll,
                 page = 0,
                 limit = 10
@@ -155,14 +159,34 @@ export class CorporateDocumentsService {
                 queryBuilder.andWhere('cd.step_progress_id IN (:...step_progress_id)', { step_progress_id });
             }
 
-            if (start_date) {
-                const startOfDay = moment(start_date).startOf('day').toDate();
-                queryBuilder.andWhere('cd.start_date > :start_date', { start_date: startOfDay });
+            // Apply start_period_year condition if provided
+            if (start_period_year) {
+                const startDate = new Date(`${start_period_year}-01-01`);
+                const endDate = new Date(`${start_period_year}-12-31`);
+                queryBuilder.andWhere('cd.start_date BETWEEN :start AND :end', {
+                    start: startDate,
+                    end: endDate
+                });
             }
 
-            if (end_date) {
-                const endOfDay = moment(end_date).endOf('day').toDate();
-                queryBuilder.andWhere('cd.end_date < :end_date', { end_date: endOfDay });
+            // Apply end_period_year condition if provided
+            if (end_period_year) {
+                const startDate = new Date(`${end_period_year}-01-01`);
+                const endDate = new Date(`${end_period_year}-12-31`);
+                queryBuilder.andWhere('cd.end_date BETWEEN :start AND :end', {
+                    start: startDate,
+                    end: endDate
+                });
+            }
+
+            // Apply reminder_period_year condition if provided
+            if (reminder_period_year) {
+                const startDate = new Date(`${reminder_period_year}-01-01`);
+                const endDate = new Date(`${reminder_period_year}-12-31`);
+                queryBuilder.andWhere('cd.reminder_date BETWEEN :start AND :end', {
+                    start: startDate,
+                    end: endDate
+                });
             }
 
             if (!viewAll) {
@@ -590,6 +614,8 @@ export class CorporateDocumentsService {
             reminder_date: item.reminder_date,
             end_date: item.end_date,
             description: item.description,
+            step_progress: item.step_progress,
+            user: item.user,
             notary: item.notary
         }));
 
@@ -606,6 +632,54 @@ export class CorporateDocumentsService {
             console.log(`Successfully saved batch of ${values.length} records.`);
         } catch (error) {
             console.error('Error during bulk upsert:', error);
+            throw error;
+        }
+    }
+
+    @Cron('* * 8 * * *') // cron every at 08:00:00 AM
+    async cronScheduleReminderCorporateDocuments() {
+        try {
+            // filter reminder date range today and tomorrow
+            const today = moment().startOf('day').toDate();
+            const tomorrow = moment().add(1, 'day').startOf('day').toDate();
+            const corporateDocuments = await this.corporateDocumentsRepository.find({
+                where: {
+                    reminder_date: Between(today, tomorrow),
+                    deletedAt: null,
+                },
+                relations: ['user'],
+            });
+
+            // find all user when role is Department Legal
+            const users: User[] = await this.userService.findAllByRoleName(["Department Legal"]);
+
+            if (corporateDocuments.length === 0) {
+                this.logger.log('No corporate document data found with reminder date today or tomorrow.');
+                return;
+            } else {
+                // Send reminder emails
+                for (const corporateDocument of corporateDocuments) {
+                    for (const user of users) {
+                        this.notificationsService.addQueueEmail({
+                            to: user.email,
+                            subject: `Reminder: AKTA RUPS Segera Berakhir`,
+                            templateName: 'reminder',
+                            context: {
+                                userName: user.name,
+                                title: corporateDocument.title,
+                                url: `http://localhost:3001/dashboard/perjanjian/${corporateDocument.id}`,
+                                number: corporateDocument.corporate_documents_number,
+                                type: 'AKTA RUPS',
+                                description: corporateDocument.description,
+                                reminder_date: moment(corporateDocument.reminder_date).format('DD MMMM YYYY'),
+                            },
+                        });
+                    }
+                }
+            }
+
+        } catch (error) {
+            this.logger.log('Error in cronScheduleReminderCorporateDocuments:', error);
             throw error;
         }
     }
