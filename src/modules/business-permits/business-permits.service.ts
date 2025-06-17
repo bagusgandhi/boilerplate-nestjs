@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, FindManyOptions, ILike, In, LessThan, MoreThan, QueryRunner, Repository } from 'typeorm';
+import { Between, Brackets, FindManyOptions, ILike, In, LessThan, MoreThan, QueryRunner, Repository } from 'typeorm';
 import { BusinessPermits } from './entities/business-permits.entity';
 import { StepProgressService } from '../step-progress/step-progress.service';
 import { UserService } from '../user/user.service';
@@ -20,6 +20,8 @@ import { promisify } from 'util';
 import * as fs from 'fs';
 import * as csvParser from 'csv-parser';
 import { pipeline } from 'stream';
+import { Cron } from '@nestjs/schedule';
+import { NotificationsService } from '../notifications/notifications.service';
 
 const pipelineAsync = promisify(pipeline);
 
@@ -36,6 +38,7 @@ export class BusinessPermitsService {
         private stepProgressService: StepProgressService,
         private userService: UserService,
         private uploadsService: UploadsService,
+        private notificationsService: NotificationsService
     ) {}
 
     async findAll(query: FilterBusinessPermitsDto) {
@@ -115,8 +118,9 @@ export class BusinessPermitsService {
             const {
                 search,
                 step_progress_id,
-                start_date,
-                end_date,
+                start_period_year,
+                end_period_year,
+                reminder_period_year,
                 viewAll,
                 page = 0,
                 limit = 10
@@ -133,7 +137,8 @@ export class BusinessPermitsService {
                 queryBuilder.andWhere(
                     new Brackets(qb => {
                         qb.where('business_permit.title ILIKE :search', { search: `%${search}%` })
-                            .orWhere('business_permit.business_permits_number ILIKE :search', { search: `%${search}%` });
+                            .orWhere('business_permit.business_permits_number ILIKE :search', { search: `%${search}%` })
+                            .orWhere('business_permit.description ILIKE :search', { search: `%${search}%` });
                     })
                 );
             }
@@ -142,15 +147,34 @@ export class BusinessPermitsService {
                 queryBuilder.andWhere('step_progress.id IN (:...step_progress_id)', { step_progress_id });
             }
 
-            // Handle date range filtering using moment.js
-            if (start_date) {
-                const startOfDay = moment(start_date).startOf('day').toDate();
-                queryBuilder.andWhere('business_permit.start_date > :start_date', { start_date: startOfDay });
+            // Apply start_period_year condition if provided
+            if (start_period_year) {
+                const startDate = new Date(`${start_period_year}-01-01`);
+                const endDate = new Date(`${start_period_year}-12-31`);
+                queryBuilder.andWhere('business_permit.start_date BETWEEN :start AND :end', {
+                    start: startDate,
+                    end: endDate
+                });
             }
 
-            if (end_date) {
-                const endOfDay = moment(end_date).endOf('day').toDate();
-                queryBuilder.andWhere('business_permit.end_date < :end_date', { end_date: endOfDay });
+            // Apply end_period_year condition if provided
+            if (end_period_year) {
+                const startDate = new Date(`${end_period_year}-01-01`);
+                const endDate = new Date(`${end_period_year}-12-31`);
+                queryBuilder.andWhere('business_permit.end_date BETWEEN :start AND :end', {
+                    start: startDate,
+                    end: endDate
+                });
+            }
+
+            // Apply reminder_period_year condition if provided
+            if (reminder_period_year) {
+                const startDate = new Date(`${reminder_period_year}-01-01`);
+                const endDate = new Date(`${reminder_period_year}-12-31`);
+                queryBuilder.andWhere('business_permit.reminder_date BETWEEN :start AND :end', {
+                    start: startDate,
+                    end: endDate
+                });
             }
 
             // If viewAll is false, exclude deleted records
@@ -588,7 +612,9 @@ export class BusinessPermitsService {
             start_date: item.start_date,
             reminder_date: item.reminder_date,
             end_date: item.end_date,
-            description: item.description
+            description: item.description,
+            step_progress: item.step_progress,
+            user: item.user,
         }));
 
         try {
@@ -608,6 +634,54 @@ export class BusinessPermitsService {
             console.log(`Successfully saved batch of ${values.length} records.`);
         } catch (error) {
             console.error('Error during bulk upsert:', error);
+            throw error;
+        }
+    }
+
+    @Cron('* * 8 * * *') // cron every at 08:00:00 AM
+    async cronScheduleReminderBusinessPermits() {
+        try {
+            // filter reminder date range today and tomorrow
+            const today = moment().startOf('day').toDate();
+            const tomorrow = moment().add(1, 'day').startOf('day').toDate();
+            const businessPermitsData = await this.businessPermitsRepository.find({
+                where: {
+                    reminder_date: Between(today, tomorrow),
+                    deletedAt: null,
+                },
+                relations: ['user'],
+            });
+
+            // find all user when role is Department Legal
+            const users: User[] = await this.userService.findAllByRoleName(["Department Legal"]);
+
+            if (businessPermitsData.length === 0) {
+                this.logger.log('No business permits data found with reminder date today or tomorrow.');
+                return;
+            } else {
+                // Send reminder emails
+                for (const businessPermit of businessPermitsData) {
+                    for (const user of users) {
+                        this.notificationsService.addQueueEmail({
+                            to: user.email,
+                            subject: `Reminder: Perizinan Segera Berakhir`,
+                            templateName: 'reminder',
+                            context: {
+                                userName: user.name,
+                                title: businessPermit.title,
+                                url: `http://localhost:3001/dashboard/perjanjian/${businessPermit.id}`,
+                                number: businessPermit.business_permits_number,
+                                type: 'Perizinan',
+                                description: businessPermit.description,
+                                reminder_date: moment(businessPermit.reminder_date).format('DD MMMM YYYY'),
+                            },
+                        });
+                    }
+                }
+            }
+
+        } catch (error) {
+            this.logger.log('Error in cronScheduleReminderBusinessPermits:', error);
             throw error;
         }
     }
