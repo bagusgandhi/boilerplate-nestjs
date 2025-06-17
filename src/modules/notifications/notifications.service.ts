@@ -5,8 +5,8 @@ import { Queue } from 'bullmq';
 interface EmailOptions {
   to: string;
   subject: string;
-  html: string;
-  context?: Record<string, any>;
+  templateName: string; // Specify the template to be used
+  context: Record<string, any>;
   attachments?: Array<{
     filename: string;
     content: Buffer | string;
