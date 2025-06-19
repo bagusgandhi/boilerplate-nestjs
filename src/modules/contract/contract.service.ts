@@ -7,8 +7,7 @@ import {
     MoreThan,
     QueryRunner, 
     Repository, 
-    FindManyOptions, 
-    ILike,
+    FindManyOptions,
     Brackets,
     Between
 } from 'typeorm';
@@ -59,6 +58,9 @@ export class ContractService {
             const {
                 search,
                 step_progress_id,
+                start_period_year,
+                end_period_year,
+                reminder_period_year,
                 start_date,
                 end_date,
                 viewAll,
@@ -89,15 +91,34 @@ export class ContractService {
                 queryBuilder.andWhere('step_progress.id IN (:...step_progress_id)', { step_progress_id });
             }
 
-            // Handle date range filtering using moment.js
-            if (start_date) {
-                const startOfDay = moment(start_date).startOf('day').toDate();
-                queryBuilder.andWhere('contract.start_date > :start_date', { start_date: startOfDay });
+            // Apply start_period_year condition if provided
+            if (start_period_year) {
+                const startDate = new Date(`${start_period_year}-01-01`);
+                const endDate = new Date(`${start_period_year}-12-31`);
+                queryBuilder.andWhere('contract.start_date BETWEEN :start AND :end', {
+                    start: startDate,
+                    end: endDate
+                });
             }
 
-            if (end_date) {
-                const endOfDay = moment(end_date).endOf('day').toDate();
-                queryBuilder.andWhere('contract.end_date < :end_date', { end_date: endOfDay });
+            // Apply end_period_year condition if provided
+            if (end_period_year) {
+                const startDate = new Date(`${end_period_year}-01-01`);
+                const endDate = new Date(`${end_period_year}-12-31`);
+                queryBuilder.andWhere('contract.end_date BETWEEN :start AND :end', {
+                    start: startDate,
+                    end: endDate
+                });
+            }
+
+            // Apply reminder_period_year condition if provided
+            if (reminder_period_year) {
+                const startDate = new Date(`${reminder_period_year}-01-01`);
+                const endDate = new Date(`${reminder_period_year}-12-31`);
+                queryBuilder.andWhere('contract.reminder_date BETWEEN :start AND :end', {
+                    start: startDate,
+                    end: endDate
+                });
             }
 
             // If viewAll is false, exclude deleted records
@@ -155,8 +176,7 @@ export class ContractService {
                 queryBuilder.andWhere(
                     new Brackets(qb => {
                         qb.where('contract.title ILIKE :search', { search: `%${search}%` })
-                            .orWhere('contract.contract_number ILIKE :search', { search: `%${search}%` })
-                            .orWhere('contract.description ILIKE :search', { search: `%${search}%` });
+                            .orWhere('contract.contract_number ILIKE :search', { search: `%${search}%` });
                     })
                 );
             }
@@ -927,7 +947,8 @@ export class ContractService {
         }
     }
 
-    @Cron('* * 8 * * *') // cron every at 08:00:00 AM
+    // @Cron('* * 8 * * *') // cron every at 08:00:00 AM
+    // @Cron('*/30 * * * * *') // cron every at 08:00:00 AM
     async cronScheduleReminderContract() {
         try {
             // filter reminder date range today and tomorrow
