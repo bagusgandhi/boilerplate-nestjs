@@ -27,10 +27,13 @@ export class NotificationProcessor extends WorkerHost {
     host: EMAIL_HOST,
     port: EMAIL_PORT,
     secure: false, // true for 465, false for other ports
+    // secure: true,
     auth: {
       user: EMAIL_USERNAME,
       pass: EMAIL_PASSWORD, // Securely handle your credentials
     },
+    logger: true,
+    debug:true,
     tls: {
       // Do not fail on invalid certs
       rejectUnauthorized: false,
