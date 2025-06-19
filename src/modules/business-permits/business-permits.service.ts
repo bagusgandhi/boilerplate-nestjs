@@ -6,7 +6,7 @@ import { StepProgressService } from '../step-progress/step-progress.service';
 import { UserService } from '../user/user.service';
 import { UploadsService } from '../uploads/uploads.service';
 import { FilterBusinessPermitsDto } from './dto/filter-business-permits.dto';
-import moment from 'moment';
+import * as moment from 'moment';
 import { FilterContractDto } from '../contract/dto/filter-contract.dto';
 import { PaginationDto } from 'src/global/dto/pagination.dto';
 import { IUserRequest } from 'src/decorators/get-user.decorator';
@@ -522,11 +522,13 @@ export class BusinessPermitsService {
         }
 
         moment.locale(locale);
-
-        const parsedDate = moment(dateStr, ['DD MMM YYYY', 'DD MMMM YYYY']);
+        
+        const parsedDate = moment(dateStr, ['DD MMM YYYY', 'DD MMMM YYYY', 'DD-MMM-YY', 'DD/MM/YYYY', 'DD-MMM-YYYY']);
         return parsedDate.isValid() ? parsedDate : null;
     }
     
+    // 16-Apr-15
+
     async bulkImportCsv(filePath: string, userId: UuidParamDto): Promise<void> {
         const results: BusinessPermits[] = [];
         const batchSize = 10000;
@@ -549,33 +551,21 @@ export class BusinessPermitsService {
                         }, {});
 
                         const businessPermit = new BusinessPermits();
-                        businessPermit.title = sanitizedRow["jenis_dokumen"];
-                        businessPermit.business_permits_number = sanitizedRow["nomor_surat"];
+                        businessPermit.title = sanitizedRow["JENIS-JENIS DOKUMEN"];
+                        businessPermit.business_permits_number = sanitizedRow["NOMOR SURAT"];
 
-                        // Handle start_date dynamically (either English or Indonesian month)
-                        const startDate = this.parseDate(sanitizedRow["tanggal_terbit"]);
-                        if (!startDate) {
-                            console.error(`Invalid start_date: ${sanitizedRow["tanggal_terbit"]}`);
-                            continue;  // Skip the row if the date is invalid
-                        }
-                        businessPermit.start_date = startDate.toDate();
+                        const startDate = this.parseDate(sanitizedRow["TANGGAL TERBIT"]);
+                        !startDate ? businessPermit.start_date = null : businessPermit.start_date = startDate.toDate();
 
                         // Validate reminder_date
-                        const reminderDate = moment(sanitizedRow["remind"], 'DD-MMM-YYYY');
-                        if (!reminderDate.isValid()) {
-                            console.error(`Invalid reminder_date: ${sanitizedRow["remind"]}`);
-                            continue; // Skip the row if the date is invalid
-                        }
-                        businessPermit.reminder_date = reminderDate.toDate();
+                        const reminderDate = this.parseDate(sanitizedRow["REMIND"]);
+                        !reminderDate ? businessPermit.reminder_date = null : businessPermit.reminder_date = reminderDate.toDate();
 
                         // Validate end_date (exither English or Indonesian month)
-                        const endDate = this.parseDate(sanitizedRow["tanggal_habis"]);
-                        if (!endDate) {
-                            console.error(`Invalid end_date: ${sanitizedRow["tanggal_habis"]}`);
-                            continue; // Skip the row if the date is invalid
-                        }
-                        businessPermit.end_date = endDate.toDate();
-                        businessPermit.description = sanitizedRow["keterangan"];
+                        const endDate = this.parseDate(sanitizedRow["TANGGAL HABIS"]);
+                        !endDate ? businessPermit.end_date = null : businessPermit.end_date = endDate.toDate();
+
+                        businessPermit.description = sanitizedRow["KETERANGAN"];
                         businessPermit.user = { id: userId.id } as User; // Set user from request
                         businessPermit.step_progress = stepProgress; // Set step progress to "selesai"
 
@@ -597,7 +587,7 @@ export class BusinessPermitsService {
 
             console.log(`CSV file processed successfully. Total records: ${results}`);
         } catch (error) {
-            console.error('Error importing CSV file', error);
+            this.logger.error('Error importing CSV file', error);
             throw error;
         }
     }
@@ -638,7 +628,7 @@ export class BusinessPermitsService {
         }
     }
 
-    @Cron('* * 8 * * *') // cron every at 08:00:00 AM
+    @Cron('0 0 8 * * *') // cron every at 08:00:00 AM
     async cronScheduleReminderBusinessPermits() {
         try {
             // filter reminder date range today and tomorrow
