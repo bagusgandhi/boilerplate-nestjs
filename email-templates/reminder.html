@@ -2,157 +2,65 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>UCOAL Resources</title>
-    <style>
-      /* General Reset */
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-      
-      body {
-        font-family: Arial, sans-serif;
-        line-height: 1.6;
-        background-color: #f4f8ff;
-        color: #244a8d;
-      }
-
-      h1, h2, h3 {
-        font-family: 'Arial', sans-serif;
-        color: #244a8d;
-      }
-
-      p {
-        font-size: 16px;
-        color: #555;
-      }
-
-      table {
-        width: 100%;
-        margin-bottom: 20px;
-      }
-
-      table td {
-        padding: 8px;
-        font-size: 14px;
-        color: #7f8ae4;
-      }
-
-      /* Container Styling */
-      .wrapper {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        background-color: #f4f8ff;
-      }
-
-      .container {
-        background-color: white;
-        padding: 40px;
-        width: 100%;
-        max-width: 600px;
-        border-radius: 12px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      }
-
-      /* Logo Styling */
-      .logo {
-        text-align: center;
-        margin-bottom: 20px;
-      }
-
-      .logo img {
-        max-width: 140px;
-      }
-
-      /* Content Styling */
-      .content {
-        text-align: left;
-      }
-
-      .content h2 {
-        font-size: 24px;
-        margin-bottom: 20px;
-      }
-
-      .content p {
-        margin-bottom: 20px;
-        font-size: 16px;
-        color: #555;
-      }
-
-      .content strong {
-        color: #244a8d;
-      }
-
-      /* Button Wrapper */
-      .button-wrapper {
-        display: flex; /* Enable flexbox for centering */
-        justify-content: center; /* Horizontally center the button */
-        margin-top: 20px; /* Add some spacing above the button */
-      }
-
-      /* Button Styling */
-      .button {
-        display: inline-block;
-        padding: 6px 12px;
-        background-color: #3ffe75;
-        color: white;
-        text-decoration: none;
-        border-radius: 6px;
-        transition: 0.3s;
-        font-weight: bold;
-      }
-
-      .button:hover {
-        background-color: #38d765;
-      }
-    </style>
   </head>
-
-  <body>
-    <div class="wrapper">
-      <div class="container">
-        <!-- ====== LOGO UCOAL ====== -->
-        <div class="logo">
-          <img src="https://www.ucoal.co.id/templates/core/img/logo-ucoal-new.png" alt="Logo UCOAL Resources" />
-        </div>
-
-        <div class="content">
-          <!-- <h2>LIS Reminder</h2> -->
-
-          <p>
-            Hai <strong>{{userName}}</strong>,<br />
-            Kami ingin mengingatkan Anda bahwa dokumen <strong>{{type}}</strong> akan segera berakhir. Silakan periksa detail di bawah ini:
-          </p>
-
-          <table>
-            <tbody>
+  <body style="margin: 0; padding: 0; background-color: #f4f8ff; font-family: Arial, sans-serif;">
+    <center>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f8ff">
+        <tr>
+          <td align="center" style="padding: 20px 10px;">
+            <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 12px; padding: 40px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
+              
+              <!-- Logo -->
               <tr>
-                <td>No Kontrak</td>
-                <td>: <strong>{{number}}</strong></td>
+                <td align="center" style="padding-bottom: 20px;">
+                  <img src="https://www.ucoal.co.id/templates/core/img/logo-ucoal-new.png" alt="Logo UCOAL Resources" style="max-width: 140px; height: auto;" />
+                </td>
               </tr>
+
+              <!-- Greeting and Message -->
               <tr>
-                <td>Judul</td>
-                <td>: <strong>{{title}}</strong></td>
+                <td style="font-size: 16px; color: #555555; line-height: 1.6;">
+                  Hai <strong style="color: #244a8d;">{{userName}}</strong>,<br /><br />
+                  Kami ingin mengingatkan Anda bahwa dokumen <strong style="color: #244a8d;">{{type}}</strong> akan segera berakhir. Silakan periksa detail di bawah ini:
+                </td>
               </tr>
-            </tbody>
-          </table>
 
-          <div class="button-wrapper">
-            <a href="{{url}}" class="button">
-              <strong>Lihat Detail</strong>
-            </a>
-          </div>
+              <!-- Contract Details -->
+              <tr>
+                <td style="padding-top: 20px;">
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td style="padding: 8px; font-size: 14px; color: #7f8ae4;">No Kontrak</td>
+                      <td style="padding: 8px; font-size: 14px; color: #7f8ae4;">: <strong style="color: #244a8d;">{{number}}</strong></td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 8px; font-size: 14px; color: #7f8ae4;">Judul</td>
+                      <td style="padding: 8px; font-size: 14px; color: #7f8ae4;">: <strong style="color: #244a8d;">{{title}}</strong></td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
 
-          <p>Deskripsi:</p>
-          <p>{{description}}</p>
+              <!-- Button -->
+              <tr>
+                <td align="center" style="padding-top: 20px;">
+                  <a href="{{url}}" style="display: inline-block; padding: 10px 20px; background-color: #3ffe75; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: bold;">Lihat Detail</a>
+                </td>
+              </tr>
 
-        </div>
-      </div>
-    </div>
+              <!-- Description -->
+              <tr>
+                <td style="padding-top: 20px; font-size: 16px; color: #555555;">
+                  <strong style="color: #244a8d;">Deskripsi:</strong><br />
+                  {{description}}
+                </td>
+              </tr>
+
+            </table>
+          </td>
+        </tr>
+      </table>
+    </center>
   </body>
 </html>
