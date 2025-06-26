@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsOptional, IsString, IsUUID } from "class-validator";
+import { IsArray, IsOptional, IsString, IsUUID } from "class-validator";
 import { PaginationDto } from "src/global/dto/pagination.dto";
 
 export class FilterContractDto extends PaginationDto {
@@ -10,6 +10,15 @@ export class FilterContractDto extends PaginationDto {
     @IsUUID('4', { each: true })
     @IsOptional()
     step_progress_id: string[];
+
+    @ApiProperty({
+        description: 'The step progress slug of the contract',
+        required: false,
+    })
+    @IsArray()
+    @IsString({ each: true }) // Validate each element in the array as a string
+    @IsOptional()
+    step_progress_slug?: string[];
 
     // start periode year
     @ApiProperty({
