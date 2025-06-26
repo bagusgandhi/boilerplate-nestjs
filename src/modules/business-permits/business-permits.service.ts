@@ -231,6 +231,7 @@ export class BusinessPermitsService {
                     description: true,
                     start_date: true,
                     end_date: true,
+                    reminder_date: true,
                     notes: true,
                     created_at: true,
                 },
@@ -346,6 +347,7 @@ export class BusinessPermitsService {
                     'business_permits.description',
                     'business_permits.start_date',
                     'business_permits.end_date',
+                    'business_permits.reminder_date',
                     'business_permits.notes',
                     'business_permits.created_at',
                 ]);
@@ -522,13 +524,21 @@ export class BusinessPermitsService {
         }
 
         moment.locale(locale);
-        
-        const parsedDate = moment(dateStr, ['DD MMM YYYY', 'DD MMMM YYYY', 'DD-MMM-YY', 'DD/MM/YYYY', 'DD-MMM-YYYY']);
+        this.logger.log(dateStr);
+
+        // Try to parse using moment with multiple common formats
+        const parsedDate = moment(dateStr, moment.ISO_8601, true); // Attempt to parse with ISO 8601 first
+
+        // Check if the parsed date is valid
+        if (!parsedDate.isValid()) {
+            // If ISO_8601 fails, try auto-detection (moment tries to guess the format)
+            const parsedDateAuto = moment(dateStr);
+            return parsedDateAuto.isValid() ? parsedDateAuto : null;
+        }
+
         return parsedDate.isValid() ? parsedDate : null;
     }
     
-    // 16-Apr-15
-
     async bulkImportCsv(filePath: string, userId: UuidParamDto): Promise<void> {
         const results: BusinessPermits[] = [];
         const batchSize = 10000;
