@@ -18,6 +18,7 @@ import { BusinessPermitsModule } from './modules/business-permits/business-permi
 import { CorporateDocumentsModule } from './modules/corporate-documents/corporate-documents.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { SettingModule } from './modules/setting/setting.module';
 
 const { EMAIL_HOST, EMAIL_USERNAME, EMAIL_PASSWORD } = Env();
 
@@ -45,6 +46,7 @@ const { EMAIL_HOST, EMAIL_USERNAME, EMAIL_PASSWORD } = Env();
     CorporateDocumentsModule,
     NotificationsModule,
     ScheduleModule.forRoot(),
+    SettingModule,
   ],
   controllers: [],
   providers: [
