@@ -23,7 +23,7 @@ export class NotificationsService {
 
     async addQueueEmail(...payload: EmailOptions[]){
         return Promise.all(
-            payload.map((e) => {
+            payload.map((e: EmailOptions) => {
                 return this.notificationsQueue.add('email', e, {
                     attempts: 3, // Retry up to 3 times on failure
                     backoff: {
