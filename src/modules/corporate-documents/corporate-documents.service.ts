@@ -64,6 +64,7 @@ export class CorporateDocumentsService {
                     'cd.description',
                     'cd.start_date',
                     'cd.end_date',
+                    'cd.reminder_date',
                     'cd.notes',
                     'cd.created_at'
                 ]);
@@ -141,6 +142,7 @@ export class CorporateDocumentsService {
                     'cd.description',
                     'cd.start_date',
                     'cd.end_date',
+                    'cd.reminder_date',
                     'cd.notes',
                     'cd.created_at'
                 ]);
@@ -238,6 +240,7 @@ export class CorporateDocumentsService {
                     description: true,
                     start_date: true,
                     end_date: true,
+                    reminder_date: true,
                     notes: true,
                     created_at: true,
                 },
@@ -352,6 +355,7 @@ export class CorporateDocumentsService {
                     'corporate_documents.description',
                     'corporate_documents.start_date',
                     'corporate_documents.end_date',
+                    'corporate_documents.reminder_date',
                     'corporate_documents.notes',
                     'corporate_documents.created_at',
                 ]);
@@ -528,8 +532,18 @@ export class CorporateDocumentsService {
         }
 
         moment.locale(locale);
+        this.logger.log(dateStr);
 
-        const parsedDate = moment(dateStr, ['DD MMM YYYY', 'DD MMMM YYYY', 'DD/MM/YYYY', 'DD-MMM-YYYY']);
+        // Try to parse using moment with multiple common formats
+        const parsedDate = moment(dateStr, moment.ISO_8601, true); // Attempt to parse with ISO 8601 first
+
+        // Check if the parsed date is valid
+        if (!parsedDate.isValid()) {
+            // If ISO_8601 fails, try auto-detection (moment tries to guess the format)
+            const parsedDateAuto = moment(dateStr);
+            return parsedDateAuto.isValid() ? parsedDateAuto : null;
+        }
+
         return parsedDate.isValid() ? parsedDate : null;
     }
 
@@ -595,8 +609,6 @@ export class CorporateDocumentsService {
             if (results.length > 0) {
                 await this.saveBatch(results);
             }
-
-            this.logger.log(`CSV file processed successfully. Total records: ${results}`);
         } catch (error) {
             this.logger.error('Error importing CSV file', error);
             throw error;
