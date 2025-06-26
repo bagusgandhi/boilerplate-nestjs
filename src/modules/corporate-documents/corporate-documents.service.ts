@@ -214,7 +214,7 @@ export class CorporateDocumentsService {
     }
 
 
-    async findAllByCurrentUser(query: FilterContractDto, userId: string) {
+    async findAllByCurrentUser(query: FilterCorporateDocumentsDto, userId: string) {
         try {
             const {
                 step_progress_id,
