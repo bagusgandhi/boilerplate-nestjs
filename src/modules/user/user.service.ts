@@ -44,6 +44,31 @@ export class UserService {
     }
   }
 
+  async findUserByIds(ids: string[]) {
+    try {
+      const users = await this.userRepository.find({
+        where: {
+          id: In(ids)
+        },
+        select: {
+          id: true,
+          email: true,
+          name: true
+        }
+      });
+
+      if (!users) {
+        throw new NotFoundException('User not found');
+      }
+
+      return users;
+    } catch (error) {
+      this.logger.error(error);
+      throw error;
+      // throw new HttpException(error.message, error.statusCode);
+    }
+  }
+
   async create(signUpDto: SignUpDto) {
     try {
       const existingUser = await this.userRepository.findOneBy({
