@@ -836,45 +836,6 @@ export class ContractService {
         }
     }
 
-    async testQueueEmail() {
-        // find all user email
-        const users = await this.userService.findAll({
-            page: 1,
-            limit: 10,
-            search: '',
-            roleId: ''
-        });
-
-        // users?.results?.forEach((user) => {
-        //     // console.log(user.email);
-        //     this.notificationsService.addQueueEmail({
-        //         to: user.email,
-        //         subject: 'Test Email',
-        //         // html: 'Test Email'
-        //     })
-        // });
-
-        return users;
-
-
-
-        // // send email to all user
-        // for (const user of users.results) {
-        //     await this.notificationsService.addQueueEmail({
-        //         to: user.email,
-        //         subject: 'Test Email',
-        //         html: 'Test Email'
-        //     })
-        // }
-
-        // return { message: "Email Berhasil Dikirim" }                                                                                                                    
-        // return this.notificationsService.addQueueEmail({
-        //     to: 'xarawe8861@endelite.com',
-        //     subject: 'Test Email',
-        //     html: 'Test Email'
-        // })
-    }
-
     parseDate(dateStr: string): any {
         const indonesianMonths = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
         let locale = 'en';
@@ -886,8 +847,18 @@ export class ContractService {
         }
 
         moment.locale(locale);
+        this.logger.log(dateStr);
 
-        const parsedDate = moment(dateStr, ['DD MMM YYYY', 'DD MMMM YYYY', 'DD/MM/YYYY', 'DD-MMM-YYYY']);
+        // Try to parse using moment with multiple common formats
+        const parsedDate = moment(dateStr, moment.ISO_8601, true); // Attempt to parse with ISO 8601 first
+
+        // Check if the parsed date is valid
+        if (!parsedDate.isValid()) {
+            // If ISO_8601 fails, try auto-detection (moment tries to guess the format)
+            const parsedDateAuto = moment(dateStr);
+            return parsedDateAuto.isValid() ? parsedDateAuto : null;
+        }
+
         return parsedDate.isValid() ? parsedDate : null;
     }
 
