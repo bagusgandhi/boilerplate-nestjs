@@ -33,7 +33,7 @@ export class PermissionService {
       return await query.getMany();
     } catch (error) {
       this.logger.error(error);
-      throw new HttpException(error.message, error.statusCode);
+      throw error;
     }
   }
 
@@ -48,7 +48,7 @@ export class PermissionService {
       return moduleData;
     } catch (error) {
       this.logger.error(error);
-      throw new HttpException(error.message, error.statusCode);
+      throw error;
     }
   }
 
@@ -76,7 +76,7 @@ export class PermissionService {
       return this.moduleRepository.save(newModule);
     } catch (error) {
       this.logger.error(error);
-      throw new HttpException(error.message, error.statusCode);
+      throw error;
     }
   }
 
@@ -106,7 +106,7 @@ export class PermissionService {
       return this.moduleRepository.save(moduleData);
     } catch (error) {
       this.logger.error(error);
-      throw new HttpException(error.message, error.statusCode);
+      throw error;
     }
   }
 
@@ -131,7 +131,7 @@ export class PermissionService {
       return { message: 'Delete module success!' };
     } catch (error) {
       this.logger.error(error);
-      throw new HttpException(error.message, error.status);
+      throw error;
     }
   }
 
@@ -153,12 +153,12 @@ export class PermissionService {
 
   async createPermission(body: CreatePermissionDto) {
     try {
-      const existingPermission = await this.permissionRepository.findOne({
+      const existingPermission: Permission = await this.permissionRepository.findOne({
         where: { name: body.name },
         withDeleted: true, // Include soft-deleted modules in the search
       });
 
-      if (existingPermission.deletedAt) {
+      if (existingPermission?.deletedAt) {
         existingPermission.deletedAt = null;
         return await this.permissionRepository.save(existingPermission);
       }
@@ -176,7 +176,7 @@ export class PermissionService {
       return this.permissionRepository.save(newPermission);
     } catch (error) {
       this.logger.error(error);
-      throw new HttpException(error.message, error.status);
+      throw error;
     }
   }
 
@@ -220,7 +220,7 @@ export class PermissionService {
       );
     } catch (error) {
       this.logger.error(error);
-      throw new HttpException(error.message, error.status);
+      throw error;
     }
   }
 
@@ -230,7 +230,7 @@ export class PermissionService {
       return { message: 'Delete Permission success!' };
     } catch (error) {
       this.logger.error(error);
-      throw new HttpException(error.message, error.status);
+      throw error;
     }
   }
 }
