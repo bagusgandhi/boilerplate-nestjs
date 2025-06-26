@@ -9,7 +9,9 @@ import {
     Repository, 
     FindManyOptions,
     Brackets,
-    Between
+    Between,
+    ILike,
+    Not
 } from 'typeorm';
 import { ContractHistory } from './entities/contract-history.entity';
 import { UpsertContractDto } from './dto/upsert-contract.dto';
@@ -57,12 +59,10 @@ export class ContractService {
         try {
             const {
                 search,
-                step_progress_id,
                 start_period_year,
                 end_period_year,
                 reminder_period_year,
-                start_date,
-                end_date,
+                step_progress_slug,
                 viewAll,
                 page = 0,
                 limit = 10
@@ -75,7 +75,28 @@ export class ContractService {
                 .leftJoinAndSelect('contract.contract_approvals', 'contract_approvals')
                 .leftJoinAndSelect('contract_approvals.user', 'contract_approval_user')
                 .where('step_progress.slug != :slug', { slug: 'selesai' })
-                .orderBy('contract.created_at', 'DESC');  // Order by created_at DESC
+                .orderBy('contract.created_at', 'DESC')  // Order by created_at DESC
+                .select([
+                    'contract.id',
+                    'contract.title',
+                    'contract.contract_number',
+                    'contract.description',
+                    'contract.scopes',
+                    'contract.start_date',
+                    'contract.end_date',
+                    'contract.notes',
+                    'contract.created_at',
+                    'user.id',
+                    'user.name',
+                    'user.email',
+                    'contract_approvals.id',
+                    'contract_approval_user.id',
+                    'contract_approval_user.name',
+                    'contract_approval_user.email',
+                    'step_progress.slug',
+                    'step_progress.id',
+                    'step_progress.title',
+                ]);
 
             // Apply search condition if search term is provided
             if (search) {
@@ -87,8 +108,10 @@ export class ContractService {
                 );
             }
 
-            if (step_progress_id) {
-                queryBuilder.andWhere('step_progress.id IN (:...step_progress_id)', { step_progress_id });
+            // Apply step_progress_id filter if provided
+            if (step_progress_slug?.length > 0) {
+                this.logger.log(step_progress_slug)
+                queryBuilder.andWhere('step_progress.slug IN (:...step_progress_slug)', { step_progress_slug });
             }
 
             // Apply start_period_year condition if provided
@@ -170,7 +193,7 @@ export class ContractService {
                 .leftJoinAndSelect('contract.contract_approvals', 'contract_approvals')
                 .leftJoinAndSelect('contract_approvals.user', 'contract_approval_user')
                 .where('step_progress.slug = :slug', { slug: 'selesai' }); // Only get contracts with step_progress slug 'selesai'
-
+                
             // Apply search condition if search term is provided
             if (search) {
                 queryBuilder.andWhere(
@@ -214,10 +237,6 @@ export class ContractService {
             // Apply the viewAll condition
             if (!viewAll) {
                 queryBuilder.andWhere('contract.deletedAt IS NULL');
-            }
-
-            // Apply pagination
-            if (!viewAll) {
                 queryBuilder.skip(page * limit).take(limit);
             }
 
@@ -249,87 +268,110 @@ export class ContractService {
 
     async findAllByCurrentUser(query: FilterContractDto, userId: string) {
         try {
-            const { 
-                step_progress_id, 
-                start_date, 
-                end_date, 
+            const {
+                start_period_year,
+                end_period_year,
+                reminder_period_year,
+                step_progress_slug,
+                search,
                 viewAll,
                 page = 0,
-                limit = 10 
+                limit = 10
             } = query;
-    
-            // Base query options
-            const queryOptions: FindManyOptions<Contract> = {
-                relations: ['step_progress', 'user', 'contract_approvals', 'contract_approvals.user'], // Add contract_approval relation
-                order: {
-                    created_at: 'DESC' as const
-                },
-                select: {
-                    id: true,
-                    title: true,
-                    contract_number: true,
-                    description: true,
-                    scopes: true,
-                    start_date: true,
-                    end_date: true,
-                    notes: true,
-                    created_at: true,
-                    user: {
-                        id: true,
-                        name: true,
-                        email: true,
-                    },
-                    contract_approvals: {
-                        id: true,
-                        user: {
-                            id: true,
-                            name: true,
-                            email: true,
-                        }
-                    },
-                },
-                where: []
-            };
-    
+
+            // Create the query builder for the Contract entity
+            const queryBuilder = this.contractRepository.createQueryBuilder('contract')
+                .leftJoinAndSelect('contract.step_progress', 'step_progress')
+                .leftJoinAndSelect('contract.user', 'user')
+                .leftJoinAndSelect('contract.contract_approvals', 'contract_approvals')
+                .leftJoinAndSelect('contract_approvals.user', 'approval_user') // For contract_approvals user
+                .orderBy('contract.created_at', 'DESC')
+                .select([
+                    'contract.id',
+                    'contract.title',
+                    'contract.contract_number',
+                    'contract.description',
+                    'contract.scopes',
+                    'contract.start_date',
+                    'contract.end_date',
+                    'contract.notes',
+                    'contract.created_at',
+                    'user.id',
+                    'user.name',
+                    'user.email',
+                    'contract_approvals.id',
+                    'approval_user.id',
+                    'approval_user.name',
+                    'approval_user.email',
+                    'step_progress.slug',
+                    'step_progress.id',
+                    'step_progress.title',
+            ]);
+
+            // Apply search filters if the search term is provided
+            if (search) {
+                this.logger.log(search)
+                queryBuilder.andWhere(
+                    new Brackets(qb => {
+                        qb.where('contract.title ILIKE :search', { search: `%${search}%` })
+                            .orWhere('contract.contract_number ILIKE :search', { search: `%${search}%` });
+                    })
+                );
+            }
+
+            // Apply step_progress_id filter if provided
+            if (step_progress_slug?.length > 0) {
+                this.logger.log(step_progress_slug)
+                queryBuilder.andWhere('step_progress.slug IN (:...step_progress_slug)', { step_progress_slug });
+            }
+
+            // Apply start_period_year condition if provided
+            if (start_period_year) {
+                const startDate = new Date(`${start_period_year}-01-01`);
+                const endDate = new Date(`${start_period_year}-12-31`);
+                queryBuilder.andWhere('contract.start_date BETWEEN :start AND :end', {
+                    start: startDate,
+                    end: endDate
+                });
+            }
+
+            // Apply end_period_year condition if provided
+            if (end_period_year) {
+                const startDate = new Date(`${end_period_year}-01-01`);
+                const endDate = new Date(`${end_period_year}-12-31`);
+                queryBuilder.andWhere('contract.end_date BETWEEN :start AND :end', {
+                    start: startDate,
+                    end: endDate
+                });
+            }
+
+            // Apply reminder_period_year condition if provided
+            if (reminder_period_year) {
+                const startDate = new Date(`${reminder_period_year}-01-01`);
+                const endDate = new Date(`${reminder_period_year}-12-31`);
+                queryBuilder.andWhere('contract.reminder_date BETWEEN :start AND :end', {
+                    start: startDate,
+                    end: endDate
+                });
+            }
+
             // Build where conditions
-            const whereConditions: any[] = [
-                { user: { id: userId } },
-                { contract_approvals: { id: userId } }
-            ];
-    
-            // Add step_progress condition if needed
-            if (step_progress_id) {
-                whereConditions.push({ step_progress: { id: In(step_progress_id) } });
-            }
-    
-            // Optimize date range queries using moment.js
-            if (start_date) {
-                const startOfDay = moment(start_date).startOf('day').toDate();
-                whereConditions.push({ start_date: MoreThan(startOfDay) });
-            }
-    
-            if (end_date) {
-                const endOfDay = moment(end_date).endOf('day').toDate();
-                whereConditions.push({ end_date: LessThan(endOfDay) });
-            }
-    
+            queryBuilder.andWhere('contract.userId = :userId OR contract_approvals.userId = :userId', { userId })
+                .andWhere('step_progress.slug != :slug', { slug: 'selesai' });
+
             // Handle deletedAt condition and pagination
             if (!viewAll) {
-                whereConditions.push({ deletedAt: null });
-                queryOptions.skip = page * limit;
-                queryOptions.take = limit;
+                queryBuilder.andWhere('contract.deletedAt IS NULL');
+                queryBuilder.skip(page * limit);
+                queryBuilder.take(limit);
             }
-    
-            queryOptions.where = whereConditions;
-    
-            // Execute query
-            const contracts = await this.contractRepository.find(queryOptions);
-            
-            // Get total count for pagination if needed
-            const total = !viewAll ? await this.contractRepository.count({
-                where: whereConditions
-            }) : contracts.length;
-    
+
+            // Execute query and get the contracts
+            const contracts = await queryBuilder.getMany();
+
+            // Get total count for pagination
+            const total = !viewAll ? await queryBuilder.getCount() : contracts.length;
+
             return {
                 data: contracts,
                 total,
@@ -337,37 +379,40 @@ export class ContractService {
                 limit: Number(limit),
                 totalPages: !viewAll ? Math.ceil(total / limit) : 1
             };
-    
+
         } catch (error) {
             this.logger.error('Error in findAllByCurrentUser:', error);
             throw error;
         }
     }
-    
+
     async findByIdByCurrentUser(id: string, userId: string) {
         try {
-            const contract = await this.contractRepository.findOne({
-                where: [
-                    {
-                        id: id,
-                        user: { id: userId },
-                        deletedAt: null,
-                    },
-                    {
-                        id: id,
-                        contract_approvals: { id: userId },
-                        deletedAt: null,
-                    }
-                ],
-                relations: ['step_progress', 'uploads', 'user', 'contract_approvals'],
-            });
+            // Create a query builder for the contract entity
+            const contract = await this.contractRepository
+                .createQueryBuilder('contract')
+                .leftJoinAndSelect('contract.step_progress', 'step_progress')
+                .leftJoinAndSelect('contract.uploads', 'uploads')
+                .leftJoinAndSelect('contract.user', 'user')
+                .leftJoinAndSelect('contract.contract_approvals', 'contract_approvals')
+                .leftJoinAndSelect('contract_approvals.user', 'approval_user')
+                .where('contract.id = :id', { id }) // Filtering by contract id
+                .andWhere(
+                    new Brackets(qb => {
+                        qb.where('contract.userId = :userId', { userId }) // Current user is the owner
+                            .orWhere('contract_approvals.userId = :userId', { userId }); // Current user is an approver
+                    })
+                )
+                .andWhere('contract.deletedAt IS NULL') // Ensure the contract is not deleted
+                .getOne(); // Retrieve the contract
 
             return contract;
         } catch (error) {
-            this.logger.error(error);
+            this.logger.error('Error in findByIdByCurrentUser:', error);
             throw error;
         }
     }
+
 
     async findById(id: string) {
         try {
@@ -855,6 +900,7 @@ export class ContractService {
             // find stepprogress sliug == selesai
             const stepProgress = await this.stepProgressService.findBySlug("selesai");
             this.logger.log(`Step Progress found: ${JSON.stringify(stepProgress)}`);
+            const userData = await this.userService.findUserById(userId)
 
             await pipelineAsync(
                 fs.createReadStream(filePath),
@@ -887,7 +933,7 @@ export class ContractService {
 
                         contract.description = sanitizedRow["PERIHAL"];
                         contract.notes = sanitizedRow["KETERANGAN"];
-                        contract.user = { id: userId.id } as User; // Set user from request
+                        contract.user = userData
                         contract.step_progress = stepProgress; // Set step progress to "selesai"
 
 
@@ -947,8 +993,7 @@ export class ContractService {
         }
     }
 
-    // @Cron('* * 8 * * *') // cron every at 08:00:00 AM
-    // @Cron('*/30 * * * * *') // cron every at 08:00:00 AM
+    @Cron('* * 8 * * *') // cron every at 08:00:00 AM
     async cronScheduleReminderContract() {
         try {
             // filter reminder date range today and tomorrow
