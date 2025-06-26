@@ -204,15 +204,6 @@ export class ContractController {
         return this.contractService.getApprovalByIdContract(params.id)
     }
 
-    // create test queue email send to all user email
-    @ApiOperation({
-        summary: 'Create test queue email send to all user email.',
-    })
-    @ApiBearerAuth()
-    @Post('test-queue-email')
-    async testQueueEmail() {
-        return this.contractService.testQueueEmail()
-    }
 
     // delete uploads file contract
     // @ApiOperation({
