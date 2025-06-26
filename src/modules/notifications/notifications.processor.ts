@@ -26,60 +26,66 @@ export class NotificationProcessor extends WorkerHost {
   private transporter = nodemailer.createTransport({
     host: EMAIL_HOST,
     port: EMAIL_PORT,
-    secure: false, // true for 465, false for other ports
+    secure: false,
     // secure: true,
     auth: {
       user: EMAIL_USERNAME,
-      pass: EMAIL_PASSWORD, // Securely handle your credentials
+      pass: EMAIL_PASSWORD,
     },
     logger: true,
     debug:true,
     tls: {
-      // Do not fail on invalid certs
       rejectUnauthorized: false,
     },
   });
 
-  async process(job: any) {
-    const emailOptions: EmailOptions = job.data;
+  async process(job: { name: string, data: any}): Promise<void> {
+    console.log(job)
 
     try {
-      // Dynamically load the HTML template based on the template name
-      let htmlContent = await this.loadTemplate(emailOptions.templateName);
-
-      // Handle dynamic templating (if context is provided)
-      if (emailOptions.context) {
-        const template = handlebars.compile(htmlContent);
-        htmlContent = template(emailOptions.context); // Replace variables in the template
-      }
-
-      // Set up email options with potential attachments
-      const mailOptions = {
-        from: EMAIL_FROM || '"Your App" <your-email@gmail.com>',
-        to: emailOptions.to, // list of receivers
-        subject: emailOptions.subject, // Subject line
-        html: htmlContent, // HTML content body
-        attachments: emailOptions.attachments, // Attachments if provided
+      const jobMap = {
+        'email': this.processEmail(job.data as EmailOptions),
+        'reminder': ""
       };
 
-      // Send the email
-      const info = await this.transporter.sendMail(mailOptions);
-      this.logger.log(`Email sent: ${info.response}`);
+      jobMap[job.name]
+
     } catch (error) {
       this.logger.error('Error sending email:', error);
-      throw error; // Will retry based on queue configuration
+      throw error;
     }
   }
 
-    // Method to load template dynamically based on template name
+  async processEmail(emailOptions: EmailOptions): Promise<void> {
+    try {
+      let htmlContent = await this.loadTemplate(emailOptions.templateName);
+      if (emailOptions.context) {
+        const template = handlebars.compile(htmlContent);
+        htmlContent = template(emailOptions.context);
+      }
+
+      const mailOptions = {
+        from: EMAIL_FROM || '"Your App" <your-email@gmail.com>',
+        to: emailOptions.to,
+        subject: emailOptions.subject,
+        html: htmlContent,
+        attachments: emailOptions.attachments,
+      };
+
+      await this.transporter.sendMail(mailOptions);
+
+    } catch (error) {
+      this.logger.error('Error sending email:', error);
+      throw error;
+    }
+  }
+
   private async loadTemplate(templateName: string): Promise<string> {
-    // Determine the path of the template
     const templatePath = path.join(__dirname, '..', '..', '..', 'email-templates', `${templateName}.html`);
     if (!fs.existsSync(templatePath)) {
       throw new Error(`Template file ${templateName} not found at path ${templatePath}`);
     }
 
-    // Read the template file content
     return fs.promises.readFile(templatePath, 'utf-8');
   }
 }
