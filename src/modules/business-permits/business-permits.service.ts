@@ -207,7 +207,7 @@ export class BusinessPermitsService {
         }
     }
 
-    async findAllByCurrentUser(query: FilterContractDto, userId: string) {
+    async findAllByCurrentUser(query: FilterBusinessPermitsDto, userId: string) {
         try {
             const { 
                 step_progress_id, 
