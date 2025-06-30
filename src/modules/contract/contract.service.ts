@@ -964,7 +964,7 @@ export class ContractService {
         }
     }
 
-    @Cron('* * 8 * * *') // cron every at 08:00:00 AM
+    @Cron('0 30 8 * * *') // cron every at 08:00:00 AM
     async cronScheduleReminderContract() {
         try {
             // filter reminder date range today and tomorrow

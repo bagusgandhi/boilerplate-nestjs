@@ -638,7 +638,7 @@ export class BusinessPermitsService {
         }
     }
 
-    @Cron('0 0 8 * * *') // cron every at 08:00:00 AM
+    @Cron('0 30 8 * * *') // cron every at 08:00:00 AM
     async cronScheduleReminderBusinessPermits() {
         try {
             // filter reminder date range today and tomorrow
