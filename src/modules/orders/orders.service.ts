@@ -159,12 +159,23 @@ export class OrdersService {
         content: HOST_SERVER,
         ttl: 3600,
         proxied: true,
+        comment: 'Create A record by activate order naiweb',
+      });
+
+      await this.cloudflareService.addDnsRecord({
+        zoneId: resCf.result.id,
+        name: 'www',
+        type: 'CNAME',
+        content: order.domain_name,
+        ttl: 3600,
+        proxied: true,
+        comment: 'Create CNAME record by activate order naiweb',
       });
 
       // update NS
       await this.registrarService.updateNS(
         REGISTRAR_CUSTOMER_ID,
-        resReg.result.id,
+        resReg.data.id,
         {
           nameservers: resCf.result.name_servers,
         },
@@ -172,8 +183,7 @@ export class OrdersService {
 
       // create sites
       await this.sitesService.createWithTransaction(queryRunner, {
-        // cloudflare_zone_id: resCf.result.id,
-        cloudflare_zone_id: 'test',
+        cloudflare_zone_id: resCf.result.id,
 
         // TODO: generate random db name
         db_name: order.domain_name.split('.')[0],
