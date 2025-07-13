@@ -61,6 +61,9 @@ export class RegistrarService {
           },
         },
       );
+
+      console.info('Domain registered successfully:', response.data);
+
       return response.data;
     } catch (error) {
       console.error(error);
@@ -83,7 +86,7 @@ export class RegistrarService {
       if (body?.nameservers[5])
         params.append('nameserver[5]', body?.nameservers[5]);
 
-      const response = await this.httpService.axiosRef.post(
+      const response = await this.httpService.axiosRef.put(
         `${REGISTRAR_URL}/domains/${domain_id}/ns`,
         params.toString(),
         {
