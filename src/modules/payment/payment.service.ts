@@ -7,6 +7,8 @@ import { InvoiceService } from '../invoice/invoice.service';
 import { StatusInvoice, TypeInvoice } from '../invoice/dto/update-invoice.dto';
 import { OrdersService } from '../orders/orders.service';
 import { Invoice } from '../invoice/entities/invoice.entity';
+import { QueueService } from '../queue/queue.service';
+import { formatRupiah } from 'src/utils/format';
 // import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
@@ -17,6 +19,7 @@ export class PaymentService {
     private readonly paymentRepository: Repository<Payment>,
     private readonly invoiceService: InvoiceService,
     private readonly ordersService: OrdersService,
+    private readonly queueService: QueueService, // Assuming you have a QueueService for handling email notifications
   ) {}
 
   async create(body: CreatePaymentDto): Promise<Payment> {
@@ -67,8 +70,6 @@ export class PaymentService {
       // Find the invoice first
       const invoice = await this.invoiceService.findByInvoiceNumber(order_id);
 
-      console.info('invoice', invoice.order.id);
-
       // Create new payment record
       const payment = this.paymentRepository.create({
         invoice,
@@ -97,6 +98,23 @@ export class PaymentService {
               { status: StatusInvoice.PAID },
             );
 
+            await this.queueService.addQueueEmail({
+              to: invoice.user.email,
+              cc: 'order@naiweb.id',
+              subject: 'Pembayaran Berhasil',
+              templateName: 'payment-success',
+              context: {
+                userName: invoice.user.name,
+                domainName: invoice.order.domain_name,
+                domainAmount: formatRupiah(invoice.order.domain.amount),
+                productAmount: formatRupiah(invoice.order.product.amount),
+                productTitle: invoice.order.product.title,
+                invoiceNumber: invoice.invoice_number,
+                total: formatRupiah(invoice.total),
+                trnsactionDetails: payment.transaction_details
+              },
+            });
+
             if (invoice.type === TypeInvoice.NEW_ORDER) {
               await this.ordersService.activateOrder(invoice.order.id);
             }
@@ -111,6 +129,24 @@ export class PaymentService {
             { status: StatusInvoice.PAID },
           );
 
+          await this.queueService.addQueueEmail({
+            to: invoice.user.email,
+            cc: 'order@naiweb.id',
+            subject: 'Pembayaran Berhasil',
+            templateName: 'payment-success',
+            context: {
+              userName: invoice.user.name,
+              domainName: invoice.order.domain_name,
+              domainAmount: formatRupiah(invoice.order.domain.amount),
+              productAmount: formatRupiah(invoice.order.product.amount),
+              productTitle: invoice.order.product.title,
+              duration: invoice.order.product.duration,
+              invoiceNumber: invoice.invoice_number,
+              total: formatRupiah(invoice.total),
+              trnsactionDetails: payment.transaction_details
+            },
+          });
+
           if (invoice.type === TypeInvoice.NEW_ORDER) {
             await this.ordersService.activateOrder(invoice.order.id);
           }
@@ -120,9 +156,45 @@ export class PaymentService {
           break;
         case 'deny':
           payment.status = PaymentStatus.DENY;
+
+          await this.queueService.addQueueEmail({
+            to: invoice.user.email,
+            cc: 'order@naiweb.id',
+            subject: 'Pembayaran Ditolak',
+            templateName: 'payment-deny',
+            context: {
+              userName: invoice.user.name,
+              domainName: invoice.order.domain_name,
+              domainAmount: formatRupiah(invoice.order.domain.amount),
+              productAmount: formatRupiah(invoice.order.product.amount),
+              productTitle: invoice.order.product.title,
+              duration: invoice.order.product.duration,
+              invoiceNumber: invoice.invoice_number,
+              total: formatRupiah(invoice.total),
+            },
+          });
+
           break;
         case 'cancel':
           payment.status = PaymentStatus.CANCEL;
+
+          await this.queueService.addQueueEmail({
+            to: invoice.user.email,
+            cc: 'order@naiweb.id',
+            subject: 'Pembayaran Ditolak',
+            templateName: 'payment-deny',
+            context: {
+              userName: invoice.user.name,
+              domainName: invoice.order.domain_name,
+              domainAmount: formatRupiah(invoice.order.domain.amount),
+              productAmount: formatRupiah(invoice.order.product.amount),
+              productTitle: invoice.order.product.title,
+              duration: invoice.order.product.duration,
+              invoiceNumber: invoice.invoice_number,
+              total: formatRupiah(invoice.total),
+            },
+          });
+
           break;
         case 'expire':
           payment.status = PaymentStatus.EXPIRE;
