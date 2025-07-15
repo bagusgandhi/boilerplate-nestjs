@@ -5,9 +5,10 @@ import { Payment } from './entities/payment.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { InvoiceModule } from 'src/modules/invoice/invoice.module';
 import { OrdersModule } from '../orders/orders.module';
+import { QueueModule } from '../queue/queue.module';
 
 @Module({
-  imports: [OrdersModule, InvoiceModule, TypeOrmModule.forFeature([Payment])],
+  imports: [OrdersModule, InvoiceModule, TypeOrmModule.forFeature([Payment]), QueueModule],
   providers: [PaymentService],
   controllers: [PaymentController],
   exports: [PaymentService],
