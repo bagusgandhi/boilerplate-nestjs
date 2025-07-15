@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Order Baru Diterima</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f7f7f7;
+      padding: 0;
+      margin: 0;
+    }
+
+    p {
+      line-height: 1.7;
+    }
+
+    .container {
+      max-width: 600px;
+      background: #ffffff;
+      margin: 30px auto;
+      border: 1px solid #dddddd;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .header {
+      background-color: #007bff;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .main {
+      padding: 20px;
+      color: #333333;
+    }
+
+    .footer {
+      background-color: #f1f1f1;
+      color: #888888;
+      text-align: center;
+      font-size: 12px;
+      padding: 15px;
+    }
+
+    .button {
+      margin: auto;
+      text-align: center;
+      display: flex;
+      justify-content: center;
+      padding: 10px 20px;
+      background-color: #28a745;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+    }
+
+    .button-contact {
+      display: inline-block;
+      padding: 10px 20px;
+      background-color: #4a4a4a;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th,
+    td {
+      text-align: left;
+      padding: 10px;
+      border-bottom: 1px solid #dddddd;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h2>Naiweb</h2>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main">
+      <h4>Halo <strong>{{userName}}</strong>,</h4>
+      <p>Terima kasih telah melakukan order layanan website + domain. Berikut adalah detail order Anda pada invoice
+        <strong>#{{invoiceNumber}}</strong>:</p>
+
+      <table>
+        <tr>
+          <th>Item</th>
+          <th>Harga</th>
+        </tr>
+        <tr>
+          <td>{{domainName}} - {{duration}} Tahun</td>
+          <td>{{domainAmount}}</td>
+        </tr>
+        <tr>
+          <td>{{productTitle}} - {{duration}} Tahun
+            <br />
+            <br />
+            Template: {{template}}
+          </td>
+          <td>{{productAmount}}</td>
+        </tr>
+        <tr>
+          <td><strong>Total</strong></td>
+          <td><strong>{{total}}</strong></td>
+        </tr>
+      </table>
+
+      <p>Silakan lakukan pembayaran untuk memproses aktivasi layanan Anda. Batas pembayaran sampai pada {{dueDate}}</p>
+      <a href="{{link}}" target="_blank" class="button">Bayar Tagihan</a>
+
+      <p>Jika Anda memiliki pertanyaan, silakan hubungi kami kapan saja.</p>
+      <a href="https://wa.me/6289513245945" target="_blank" class="">Hubungi Kami</a>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      © 2025 Naiweb. All rights reserved.<br>
+    </div>
+  </div>
+</body>
+
+</html>
