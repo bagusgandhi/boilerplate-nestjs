@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Aktivasi Order</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f7f7f7;
+      padding: 0;
+      margin: 0;
+    }
+
+    p {
+      line-height: 1.7;
+    }
+
+    .container {
+      max-width: 600px;
+      background: #ffffff;
+      margin: 30px auto;
+      border: 1px solid #dddddd;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .header {
+      background-color: #007bff;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    .main {
+      padding: 20px;
+      color: #333333;
+    }
+    .footer {
+      background-color: #f1f1f1;
+      color: #888888;
+      text-align: center;
+      font-size: 12px;
+      padding: 15px;
+    }
+    .button {
+      display: inline-block;
+      padding: 10px 20px;
+      background-color: #28a745;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h2>Naiweb</h2>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main">
+      <h4>Halo <strong>{{userName}}</strong>,</h4>
+      <p>Order layanan website <strong>{{productTitle}}</strong> + domain <strong>{{domainName}}</strong> Anda sedang dalam proses aktivasi. Layanan aktif hingga <strong>{{expiredAt}}</strong></p>
+      <p>Untuk melanjutkan proses pembuatan website, mohon kirimkan materi berikut ke email <strong>support@naiweb.id</strong>:</p>
+      <ul>
+        <li>Logo</li>
+        <li>Profil Usaha</li>
+        <li>Daftar Produk / Layanan</li>
+        <li>Kontak Informasi</li>
+        <li>Artikel atau Informasi lainnya</li>
+      </ul>
+
+      <p>Jika Anda memiliki pertanyaan, silakan hubungi kami kapan saja.</p>
+      <a href="https://wa.me/6289513245945" target="_blank" class="">Hubungi Kami</a>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      © 2025 Naiweb. All rights reserved.<br>
+    </div>
+  </div>
+</body>
+</html>
