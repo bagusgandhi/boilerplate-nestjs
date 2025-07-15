@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, LessThan, Repository } from 'typeorm';
+import { Between, In, LessThan, LessThanOrEqual, Repository } from 'typeorm';
 import { Orders, StatusOrder } from './entities/orders.entity';
 import { CreateOrdersDto } from './dto/create-orders.dto';
 import { DomainService } from '../domain/domain.service';
@@ -27,7 +27,9 @@ import { SitesService } from '../sites/sites.service';
 import { Invoice } from '../invoice/entities/invoice.entity';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { QueueService } from '../queue/queue.service';
-const { REGISTRAR_CUSTOMER_ID, HOST_SERVER } = Env();
+import { formatRupiah } from 'src/utils/format';
+import { link } from 'fs';
+const { REGISTRAR_CUSTOMER_ID, HOST_SERVER, SITE_URL } = Env();
 @Injectable()
 export class OrdersService {
   private readonly logger = new Logger(OrdersService.name);
@@ -119,6 +121,28 @@ export class OrdersService {
       );
 
       await queryRunner.commitTransaction();
+
+      // notif email new-order
+      await this.queueService.addQueueEmail({
+        to: userData.email,
+        cc: 'order@naiweb.id',
+        subject: `Order Invoice #${invoiceData.invoice_number}`,
+        templateName: 'new-order',
+        context: {
+          userName: userData?.name,
+          domainName: order?.domain_name,
+          productTitle: order?.product?.title,
+          domainAmount: formatRupiah(order.domain.amount) ,
+          productAmount: formatRupiah(order.product.amount),
+          duration: order?.product?.duration,
+          total: formatRupiah(order.total),
+          dueDate: moment(invoiceData?.due_date).format('DD MMMM YYYY'),
+          template: order?.template?.title,
+          invoiceNumber: invoiceData?.invoice_number,
+          link: `https://${SITE_URL}/dashboard/invoice/${invoiceData?.id}`,
+        },
+      });
+      
       return { order, invoice: invoiceData };
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -214,7 +238,23 @@ export class OrdersService {
           demo: order?.template?.title.toLowerCase().split(' ').join('_'),
         },
       });
+
       await queryRunner.commitTransaction();
+
+      // notif email order-activation
+      await this.queueService.addQueueEmail({
+        to: order.user.email,
+        cc: 'order@naiweb.id',
+        subject: 'Aktivasi Order',
+        templateName: 'order-activation',
+        context: {
+          userName: order?.user?.name,
+          domainName: order?.domain_name,
+          productTitle: order?.product?.title,
+          expiredAt: moment(order?.expired_date).format('DD MMMM YYYY'),
+        },
+      });
+
       return order;
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -349,12 +389,15 @@ export class OrdersService {
     await queryRunner.startTransaction();
     try {
       // get all order data with status active or renewed
+      const targetDateStart = moment().add(7, 'days').startOf('day').toDate();
+      const targetDateEnd = moment().add(7, 'days').endOf('day').toDate();
+
       const orders = await this.ordersRepository.find({
         where: {
           status: In([StatusOrder.ACTIVE, StatusOrder.RENEWED]),
-          expired_date: LessThan(new Date()),
+          expired_date: Between(targetDateStart, targetDateEnd),
         },
-        relations: ['user'],
+        relations: ['user', 'domain', 'product'],
       });
 
       this.logger.log(`Found ${orders.length} expired orders to process`);
@@ -366,10 +409,12 @@ export class OrdersService {
         { status: StatusOrder.EXPIRED },
       );
 
+      const emailPayloads = []
+
       // when order has expired, create invoice for renewal using promise.all
       await Promise.all(
         orders.map(async (order) => {
-          await this.invoiceService.createWithTransaction(queryRunner, {
+          const invoice = await this.invoiceService.createWithTransaction(queryRunner, {
             order: order,
             user: order.user,
             status: StatusInvoice.PENDING,
@@ -377,12 +422,36 @@ export class OrdersService {
             type: TypeInvoice.RENEWAL,
             total: order.total,
           });
+
+          // notif email expired
+          emailPayloads.push({
+            to: order.user.email,
+            cc: 'order@naiweb.id',
+            subject: `Website ${order.domain_name} Expired`,
+            templateName: 'expired-service',
+            context: {
+              invoiceNumber: invoice?.invoice_number,
+              userName: order?.user?.name,
+              domainName: order?.domain_name,
+              domainAmount: formatRupiah(order.domain.amount),
+              productAmount: formatRupiah(order.product.amount),
+              duration: order?.product?.duration,
+              productTitle: order?.product?.title,
+              total: formatRupiah(order.total),
+              expiredDate: moment(order?.expired_date).format('DD MMMM YYYY'),
+              link: `https://${SITE_URL}/dashboard/invoice/${invoice?.id}`,
+            },
+          });
         }),
       );
 
       await queryRunner.commitTransaction();
       this.logger.log(
         'Successfully processed expired orders and created renewal invoices',
+      );
+
+      await Promise.all(
+        emailPayloads.map((email) => this.queueService.addQueueEmail(email))
       );
     } catch (error) {
       await queryRunner.rollbackTransaction();
