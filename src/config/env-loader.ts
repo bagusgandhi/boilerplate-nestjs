@@ -27,4 +27,7 @@ export const Env = () => ({
   REDIS_HOST: process.env.REDIS_HOST,
   REDIS_PORT: +process.env.REDIS_PORT,
   REDIS_PASSWORD: process.env.REDIS_PASSWORD,
+  EMAIL_PORT: +process.env.EMAIL_PORT || 587,
+  EMAIL_FROM: process.env.EMAIL_FROM || 'Naiweb Support <support@naiweb.id>',
+  SITE_URL: process.env.SITE_URL || 'http://localhost:3007',
 });
