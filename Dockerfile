@@ -32,6 +32,7 @@ WORKDIR /usr/src/app
 # Copy built application and dependencies from the build stage
 COPY --from=build /usr/src/app/jwt ./jwt
 COPY --from=build /usr/src/app/dist ./dist
+COPY --from=build /usr/src/app/email-templates ./email-templates
 COPY --from=build /usr/src/app/node_modules ./node_modules
 COPY package*.json ./
 

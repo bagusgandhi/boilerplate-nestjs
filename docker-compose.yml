@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   backend:
-    container_name: boilerplate-nestjs
+    container_name: naiweb-api
     build: .
     ports:
       - "8093:4000"
