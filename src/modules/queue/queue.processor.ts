@@ -67,7 +67,7 @@ export class QueueProcessor extends WorkerHost {
       }
 
       const mailOptions = {
-        from: EMAIL_FROM || 'Naiweb Support <aupport@naiweb.id>',
+        from: EMAIL_FROM || 'Naiweb Support <support@naiweb.id>',
         to: emailOptions.to,
         subject: emailOptions.subject,
         html: htmlContent,

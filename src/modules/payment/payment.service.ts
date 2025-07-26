@@ -100,7 +100,7 @@ export class PaymentService {
 
             await this.queueService.addQueueEmail({
               to: invoice.user.email,
-              cc: 'order@naiweb.id',
+              cc: 'support@naiweb.id',
               subject: 'Pembayaran Berhasil',
               templateName: 'payment-success',
               context: {
@@ -131,7 +131,7 @@ export class PaymentService {
 
           await this.queueService.addQueueEmail({
             to: invoice.user.email,
-            cc: 'order@naiweb.id',
+            cc: 'support@naiweb.id',
             subject: 'Pembayaran Berhasil',
             templateName: 'payment-success',
             context: {
@@ -159,7 +159,7 @@ export class PaymentService {
 
           await this.queueService.addQueueEmail({
             to: invoice.user.email,
-            cc: 'order@naiweb.id',
+            cc: 'support@naiweb.id',
             subject: 'Pembayaran Ditolak',
             templateName: 'payment-deny',
             context: {
@@ -180,7 +180,7 @@ export class PaymentService {
 
           await this.queueService.addQueueEmail({
             to: invoice.user.email,
-            cc: 'order@naiweb.id',
+            cc: 'support@naiweb.id',
             subject: 'Pembayaran Ditolak',
             templateName: 'payment-deny',
             context: {

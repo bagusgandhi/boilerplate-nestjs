@@ -125,7 +125,7 @@ export class OrdersService {
       // notif email new-order
       await this.queueService.addQueueEmail({
         to: userData.email,
-        cc: 'order@naiweb.id',
+        cc: 'support@naiweb.id',
         subject: `Order Invoice #${invoiceData.invoice_number}`,
         templateName: 'new-order',
         context: {
@@ -244,7 +244,7 @@ export class OrdersService {
       // notif email order-activation
       await this.queueService.addQueueEmail({
         to: order.user.email,
-        cc: 'order@naiweb.id',
+        cc: 'support@naiweb.id',
         subject: 'Aktivasi Order',
         templateName: 'order-activation',
         context: {
@@ -426,7 +426,7 @@ export class OrdersService {
           // notif email expired
           emailPayloads.push({
             to: order.user.email,
-            cc: 'order@naiweb.id',
+            cc: 'support@naiweb.id',
             subject: `Website ${order.domain_name} Expired`,
             templateName: 'expired-service',
             context: {
