@@ -86,7 +86,8 @@ export class InvoiceService {
       const queryBuilder = this.invoiceRepository
         .createQueryBuilder('invoice')
         .leftJoinAndSelect('invoice.order', 'order')
-        .leftJoinAndSelect('invoice.user', 'user');
+        .leftJoinAndSelect('invoice.user', 'user')
+        .orderBy('invoice.created_at', 'DESC');
 
       if (search) {
         queryBuilder
@@ -122,7 +123,8 @@ export class InvoiceService {
         .createQueryBuilder('invoice')
         .leftJoinAndSelect('invoice.order', 'order')
         .leftJoinAndSelect('invoice.user', 'user')
-        .where('invoice.user.id = :user', { user: user.id });
+        .where('invoice.user.id = :user', { user: user.id })
+        .orderBy('invoice.created_at', 'DESC');
 
       if (search) {
         queryBuilder.where('order.domain_name ILIKE :search', {
