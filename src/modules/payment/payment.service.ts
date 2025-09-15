@@ -157,6 +157,12 @@ export class PaymentService {
         case 'deny':
           payment.status = PaymentStatus.DENY;
 
+          await this.invoiceService.updateWithTransaction(
+            queryRunner,
+            invoice.id,
+            { status: StatusInvoice.CANCELED },
+          );
+
           await this.queueService.addQueueEmail({
             to: invoice.user.email,
             cc: 'support@naiweb.id',
@@ -178,6 +184,12 @@ export class PaymentService {
         case 'cancel':
           payment.status = PaymentStatus.CANCEL;
 
+          await this.invoiceService.updateWithTransaction(
+            queryRunner,
+            invoice.id,
+            { status: StatusInvoice.CANCELED },
+          );
+
           await this.queueService.addQueueEmail({
             to: invoice.user.email,
             cc: 'support@naiweb.id',
@@ -198,6 +210,30 @@ export class PaymentService {
           break;
         case 'expire':
           payment.status = PaymentStatus.EXPIRE;
+
+          await this.invoiceService.updateWithTransaction(
+            queryRunner,
+            invoice.id,
+            { status: StatusInvoice.CANCELED },
+          );
+
+          await this.queueService.addQueueEmail({
+            to: invoice.user.email,
+            cc: 'support@naiweb.id',
+            subject: 'Pembayaran Expired',
+            templateName: 'payment-deny',
+            context: {
+              userName: invoice.user.name,
+              domainName: invoice.order.domain_name,
+              domainAmount: formatRupiah(invoice.order.domain.amount),
+              productAmount: formatRupiah(invoice.order.product.amount),
+              productTitle: invoice.order.product.title,
+              duration: invoice.order.product.duration,
+              invoiceNumber: invoice.invoice_number,
+              total: formatRupiah(invoice.total),
+            },
+          });
+
           break;
         case 'refund':
           payment.status = PaymentStatus.REFUNDED;
